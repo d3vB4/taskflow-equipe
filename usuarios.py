@@ -1,1 +1,1 @@
-"Cadastro de Usuarios" "Correção"
+"Cadastro de Usuarios" "Correção" "Reset"
