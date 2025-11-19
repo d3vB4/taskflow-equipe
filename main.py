@@ -1,209 +1,151 @@
-from os import name
-import time
 import sys
+import time
 
-
+# Tenta importar os módulos dos outros desenvolvedores.
+# Isso satisfaz os Cards 5 e 6 (Integração).
 try:
-    import usuarios
-    import tarefas
-    import relatorios
-except ImportError:
-    print("ERRO: Certifique-se que os arquivos 'usuarios.py', 'tarefas.py', e 'relatorios.py' estão na mesma pasta.")
+    import usuarios   # Dev 2
+    import tarefas    # Dev 3
+    import relatorios # Dev 4
+except ImportError as e:
+    print(f"ERRO CRÍTICO: Falha ao importar módulos. Verifique se usuarios.py, tarefas.py e relatorios.py existem.")
+    print(f"Detalhe: {e}")
     sys.exit(1)
-# -------------------------------------------
 
-# Variável global para armazenar os dados do usuário logado
+# Variável global para sessão do usuário
 usuario_logado = None
 
 def limpar_tela():
-    """Limpa o console (simples, apenas rolando a tela)."""
-    print("\n" * 40)
+    """Simula a limpeza de tela imprimindo linhas vazias."""
+    print("\n" * 3)
 
-def aguardar(segundos=2):
-    """Pausa a execução por alguns segundos."""
+def aguardar(segundos=1.5):
+    """Pausa para que o usuário possa ler a mensagem."""
     time.sleep(segundos)
 
-
+# --- CARD 4: MENU PRINCIPAL ---
 def exibir_menu_principal():
-    """Exibe o menu inicial de login e cadastro."""
+    """Exibe o menu de entrada (não logado)."""
     limpar_tela()
-    print("==========================================")
-    print("   TASKFLOW - Sistema de Tarefas   ")
-    print("==========================================")
-    print("1. Realizar Login")
-    print("2. Cadastrar Novo Usuário")
-    print("3. Sair do Sistema")
-    print("------------------------------------------")
-    return input("Escolha uma opção: ")
+    print("="*40)
+    print("      TASKFLOW - Gestão de Tarefas      ")
+    print("="*40)
+    print("1. Login")
+    print("2. Cadastrar Usuário")
+    print("3. Sair")
+    print("-" * 40)
+    return input(">>> Escolha uma opção: ")
 
-
+# --- CARD 6: MENU DE TAREFAS ---
 def exibir_menu_tarefas():
-    """Exibe o menu de ações do usuário logado."""
+    """Exibe o menu de operações (usuário logado)."""
     limpar_tela()
-    global usuario_logado
-    
-    print(f"================== TASKFLOW ==================")
-    print(f"Usuário: {usuario_logado.get('nome', 'Desconhecido')}")
-    print("------------------------------------------")
-    print("1. Criar Nova Tarefa")
-    print("2. Listar Minhas Tarefas")
+    print("="*40)
+    print(f" Bem-vindo, {usuario_logado['nome']}! ")
+    print("="*40)
+    print("1. Nova Tarefa")
+    print("2. Listar Tarefas")
     print("3. Editar Tarefa")
     print("4. Excluir Tarefa")
-    print("5. Marcar Tarefa como Concluída")
-    print("6. Ver Relatórios de Produtividade")
-    print("7. Logout (Voltar ao menu principal)")
-    print("------------------------------------------")
-    return input("Escolha uma opção: ")
+    print("5. Concluir Tarefa")
+    print("6. Relatórios")
+    print("0. Logout")
+    print("-" * 40)
+    return input(">>> O que deseja fazer? ")
 
-
+# --- CARD 5: FLUXO DE AUTENTICAÇÃO ---
 def fluxo_login():
-    """Controla o fluxo de login chamando o módulo 'usuarios'."""
-    limpar_tela()
-    print("--- LOGIN DE USUÁRIO ---")
+    """Gerencia a tentativa de login usando o módulo usuarios."""
+    global usuario_logado
+    print("\n--- LOGIN ---")
+    # Chama a função do Dev 2
+    usuario = usuarios.realizar_login()
     
-    
-    resultado_login = usuarios.realizar_login() 
-    
-    if resultado_login:
-        global usuario_logado
-        usuario_logado = resultado_login
-        print(f"\nLogin bem-sucedido! Bem-vindo(a), {usuario_logado['nome']}!")
-        aguardar(2)
-        return True # Indica que o login foi um sucesso
+    if usuario:
+        usuario_logado = usuario
+        print("Login realizado com sucesso!")
+        aguardar()
     else:
-        print("\nFalha no login. Verifique seu login e senha.")
-        aguardar(2)
-        return False # Indica que o login falhou
+        print("Login ou senha inválidos.")
+        aguardar()
 
 def fluxo_cadastro():
-    """Controla o fluxo de cadastro chamando o módulo 'usuarios'."""
-    limpar_tela()
-    print("--- CADASTRO DE NOVO USUÁRIO ---")
-    
-    # Chama a função de cadastro do Dev 2
-    sucesso = usuarios.cadastrar_usuario()
-    
-    if sucesso:
-        print("\nCadastro realizado com sucesso!")
-        print("Você já pode realizar o login.")
+    """Gerencia o cadastro usando o módulo usuarios."""
+    print("\n--- NOVO USUÁRIO ---")
+    # Chama a função do Dev 2
+    if usuarios.cadastrar_usuario():
+        print("Usuário cadastrado com sucesso! Faça login para entrar.")
     else:
-        print("\nOcorreu um erro durante o cadastro.")
-        
-    aguardar(2)
+        print("Erro ao cadastrar usuário.")
+    aguardar()
 
-# --- (Card 6) Integração com 'tarefas.py' e 'relatorios.py' ---
-def fluxo_gerenciar_tarefas():
-    """Loop principal do menu de tarefas do usuário logado."""
+# --- LOGICA DO MENU DE TAREFAS ---
+def processar_menu_tarefas():
+    """Processa as opções do usuário logado."""
     global usuario_logado
-    if not usuario_logado:
-        print("Erro: Nenhum usuário logado.")
-        aguardar(2)
-        return
-
-    while True:
+    while usuario_logado:
         opcao = exibir_menu_tarefas()
         
         if opcao == '1':
-            # Chama a função de criar tarefa do Dev 3
             tarefas.cadastrar_tarefa(usuario_logado)
-            aguardar(2)
-            
         elif opcao == '2':
             tarefas.listar_tarefas(usuario_logado)
-            aguardar(3) 
-            
+            input("\nPressione Enter para voltar...")
         elif opcao == '3':
-            # Chama a função de editar tarefa do Dev 3
             tarefas.editar_tarefa(usuario_logado)
-            aguardar(2)
-            
         elif opcao == '4':
-            # Chama a função de excluir tarefa do Dev 3
             tarefas.excluir_tarefa(usuario_logado)
-            aguardar(2)
-            
         elif opcao == '5':
-            # Chama a função de concluir tarefa do Dev 3
             tarefas.concluir_tarefa(usuario_logado)
-            aguardar(2)
-            
         elif opcao == '6':
-            # Chama o fluxo de relatórios
-            fluxo_ver_relatorios()
-            
-        elif opcao == '7':
-            print("Fazendo logout...")
-            usuario_logado = None # Desloga o usuário
-            aguardar(1)
-            break # Quebra o loop, voltando ao menu principal
-            
+            # Sub-menu de relatórios (Dev 4)
+            print("\n[Relatórios]")
+            print("1. Tarefas Concluídas")
+            print("2. Pendentes/Atrasadas")
+            sub = input("Opção: ")
+            if sub == '1':
+                relatorios.gerar_relatorio_concluidas(usuario_logado)
+            elif sub == '2':
+                relatorios.gerar_relatorio_pendentes(usuario_logado)
+            input("\nPressione Enter para voltar...")
+        elif opcao == '0':
+            print("Saindo...")
+            usuario_logado = None # Logout
         else:
-            print("Opção inválida. Tente novamente.")
-            aguardar(1)
+            print("Opção inválida!")
+            aguardar()
 
-def fluxo_ver_relatorios():
-    """Sub-menu para visualização de relatórios (chama Dev 4)."""
-    limpar_tela()
-    print("--- RELATÓRIOS DE PRODUTIVIDADE ---")
-    print("1. Ver Tarefas Concluídas")
-    print("2. Ver Tarefas Pendentes/Atrasadas")
-    print("3. Voltar ao Menu de Tarefas")
-    
-    opcao_relatorio = input("Escolha uma opção: ")
-    
-    if opcao_relatorio == '1':
-        relatorios.gerar_relatorio_concluidas(usuario_logado)
-        
-    elif opcao_relatorio == '2':
-        relatorios.gerar_relatorio_pendentes(usuario_logado)
-        
-    elif opcao_relatorio == '3':
-        print("Voltando...")
-        
-    else:
-        print("Opção inválida.")
-        
-    aguardar(4) # Mais tempo para ler o relatório
-
-def main():    
+# --- CARD 7: TRATAMENTO GLOBAL DE ERROS ---
+def main():
+    """Loop principal do programa."""
     try:
         while True:
-            # Se o usuário não está logado, mostra o menu principal
             if not usuario_logado:
                 opcao = exibir_menu_principal()
                 
                 if opcao == '1':
-                    # fluxo_login() retorna True se o login foi bem-sucedido
-                    if fluxo_login():
-                        # Se o login deu certo, inicia o menu de tarefas
-                        fluxo_gerenciar_tarefas()
-                
+                    fluxo_login()
                 elif opcao == '2':
                     fluxo_cadastro()
-                
                 elif opcao == '3':
-                    print("Obrigado por usar o TaskFlow. Até logo!")
-                    aguardar(1)
-                    sys.exit(0) # Encerra o programa
-                
+                    print("Encerrando TaskFlow. Até logo!")
+                    sys.exit(0)
                 else:
-                    print("Opção inválida. Tente novamente.")
-                    aguardar(1)
+                    print("Opção inválida, tente novamente.")
+                    aguardar()
             else:
-                # Se o usuário já está logado (improvável cair aqui, mas é uma garantia)
-                fluxo_gerenciar_tarefas()
-                
+                # Se usuário está logado, vai para o menu de tarefas
+                processar_menu_tarefas()
+
     except KeyboardInterrupt:
-        print("\n\nOperação interrompida pelo usuário (Ctrl+C).")
-        print("Encerrando o sistema...")
-        aguardar(1)
-        sys.exit(1)
+        # Trata quando o usuário aperta Ctrl+C
+        print("\n\nInterrupção forçada (Ctrl+C). Saindo...")
+        sys.exit(0)
     except Exception as e:
-        print(f"\n--- ERRO INESPERADO (Card 7) ---")
-        print(f"Ocorreu um erro global não tratado: {e}")
-        print("Por favor, reinicie o aplicativo.")
-        aguardar(5)
+        # Captura qualquer erro não previsto para o app não 'explodir' na cara do usuário
+        print(f"\n\n[ERRO FATAL] Ocorreu um erro inesperado: {e}")
+        print("Por favor, contate o suporte.")
         sys.exit(1)
 
-if name == "main":
+if __name__ == "__main__":
     main()
