@@ -1,57 +1,28 @@
-import json
-import os
+def salvar_dados(arquivo_destino: str, lista_dados: list[str]) -> None:
+    # Função responsável por escrever a lista no arquivo
+    try:
+        with open(arquivo_destino, 'w', encoding='utf-8') as f:
+            linhas = [dados + '\n' for dados in lista_dados]
+            f.writelines(linhas)
+        print(f"Dados salvos com sucesso em '{arquivo_destino}'") 
+    except IOError as e:
+        print(f"Ocorreu um erro ao tentar salvar o arquivo: {e}")
 
-# (Card 18) Módulo de Persistência JSON
-
-def carregar_dados(nome_arquivo: str) -> list:
-    """
-    Carrega uma lista de dados de um arquivo JSON.
-
-    Args:
-        nome_arquivo (str): O nome do arquivo (ex: 'usuarios.json').
-
-    Returns:
-        list: Uma lista de dicionários com os dados.
-              Retorna uma lista vazia se o arquivo não for encontrado
-              ou se contiver um JSON inválido.
-    """
-    if not os.path.exists(nome_arquivo):
-        # Se o arquivo não existe, cria um vazio e retorna lista vazia
-        salvar_dados([], nome_arquivo)
-        return []
+def carregar_dados(arquivo_destino: str) -> list[str]:
+    # Lê o arquivo e retorna os dados em uma lista.
+    # Retorna lista vazia [] se o arquivo não existir.
+    try:
+        with open(arquivo_destino, 'r', encoding='utf-8') as f:
+            linhas = f.readlines()
+            listaTarefas = [dados.strip() for dados in linhas if len(dados.strip()) > 0]
         
-    try:
-        with open(nome_arquivo, 'r', encoding='utf-8') as f:
-            dados = json.load(f)
-            # Garante que sempre retornamos uma lista
-            return dados if isinstance(dados, list) else []
-    except json.JSONDecodeError:
-        print(f"Aviso: Arquivo '{nome_arquivo}' está corrompido ou vazio. Iniciando com dados limpos.")
-        return [] # Retorna lista vazia se o JSON for inválido
-    except IOError as e:
-        print(f"Erro ao carregar o arquivo {nome_arquivo}: {e}")
+        print(f"Dados carregados com sucesso de '{arquivo_destino}'")
+        return listaTarefas
+    
+    except FileNotFoundError:
+        print(f"O arquivo '{arquivo_destino}' não foi encontrado. Retornando lista vazia.")
         return []
-
-def salvar_dados(dados: list, nome_arquivo: str) -> bool:
-    """
-    Salva uma lista de dados em um arquivo JSON.
-
-    Args:
-        dados (list): A lista de dicionários a ser salva.
-        nome_arquivo (str): O nome do arquivo (ex: 'usuarios.json').
-
-    Returns:
-        bool: True se os dados foram salvos, False se ocorreu um erro.
-    """
-    try:
-        # 'w' (write) apaga o conteúdo anterior e escreve o novo
-        # 'indent=4' formata o JSON para ficar legível
-        with open(nome_arquivo, 'w', encoding='utf-8') as f:
-            json.dump(dados, f, indent=4, ensure_ascii=False)
-        return True
+    
     except IOError as e:
-        print(f"Erro ao salvar dados em {nome_arquivo}: {e}")
-        return False
-    except TypeError as e:
-        print(f"Erro de tipo ao tentar salvar dados: {e}")
-        return False
+        print(f'Erro ao carregar arquivo: {e}')
+        return []
