@@ -2,18 +2,19 @@ import uuid # Para gerar IDs únicos
 import hashlib # Para hash de senhas
 import unicodedata # Para normalização de strings
 
-usuario = {}
+# Agora armazena múltiplos usuários por id
+usuarios = {}
 
 def _hash_senha(senha: str) -> str:
     return hashlib.sha256(senha.encode('utf-8')).hexdigest()
 
-def cadastrar_usuario(nome: str | None = None, login: str | None = None, email: str | None = None, senha: str | None = None, setor: str | None = None) -> bool:
+def cadastrar_usuario(nome: str | None = None, login: str | None = None, email: str | None = None, senha: str | None = None, setor: str | None = None) -> dict:
     # Solicita os dados do usuário se não fornecidos
     nome = input("Nome: ") if nome is None else nome
     login = input("Login: ") if login is None else login
     email = input("Email: ") if email is None else email
     senha = input("Senha: ") if senha is None else senha
-    setor = input("Setor (Recepção, Enfermagem, Médicos, Farmácias): ") if setor is None else setor 
+    setor = input("Setor (Recepçao, Enfermagem, Medico, Farmacia): ") if setor is None else setor 
 
    # Valida os parâmetros obrigatórios 
    
@@ -43,8 +44,6 @@ def cadastrar_usuario(nome: str | None = None, login: str | None = None, email: 
 
      # Gera um ID único para o usuário
     novo_id = str(uuid.uuid4())
-
-    # Cria o dicionário do novo usuário
     novo_usuario = {
         'id': novo_id,
         'nome': nome,
@@ -53,13 +52,24 @@ def cadastrar_usuario(nome: str | None = None, login: str | None = None, email: 
         'setor': setor_normalizado,
         'senha': _hash_senha(senha),
     }
-
-    usuario.clear()
-    usuario.update(novo_usuario)
-
+    usuarios[novo_id] = novo_usuario
     return novo_usuario
      #
-def obter_usuario() -> bool:
-    return usuario
+
+def obter_usuario(id_usuario: str) -> dict | None:
+    return usuarios.get(id_usuario)
+
+def listar_usuarios() -> list[dict]:
+    """Retorna uma lista com todos os usuários cadastrados."""
+    return list(usuarios.values())
+
+
+if __name__ == "__main__":
+    # Exemplo de cadastro de dois usuários
+    cadastrar_usuario("Ana", "ana123", "ana@example.com", "123456", "recepção")
+    cadastrar_usuario("Beto", "beto456", "beto@example.com", "654321", "enfermagem")
+    print("Usuários cadastrados:")
+    for u in listar_usuarios():
+        print(u)
 
 
