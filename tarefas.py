@@ -42,11 +42,24 @@ def criar_tarefa(titulo, descricao, responsavel, prazo):
 
 #Função para listar todas as tarefas
 def listar_tarefas(incluir_concluidas=True):
-    pass
+    if incluir_concluidas:
+        return tarefas # Retorna todas as tarefas
 
-def editar_tarefa(id_tarefa, **novos_dados):
-    pass
+    return [tarefa for tarefa in tarefas if tarefa["status"] != "concluida"] # Retorna apenas as tarefas pendentes
 
+# Função para editar uma tarefa existente
+def editar_tarefa(id_tarefa, **novos_dados):     
+    for tarefa in tarefas: # Percorre a lista de tarefas
+        if tarefa["id"] == id_tarefa:
+
+            for chave in ["titulo", "descricao", "responsavel", "prazo"]: # Atualiza os campos fornecidos
+                if chave in novos_dados and novos_dados[chave] is not None:
+                    tarefa[chave] = novos_dados[chave]
+
+            return tarefa # Retorna a tarefa atualizada
+
+    return None # Retorna None se a tarefa não for encontrada
+ 
 def concluir_tarefa(id_tarefa):
     pass
 
