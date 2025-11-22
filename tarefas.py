@@ -1,7 +1,7 @@
-from uuid import uuid4
-from datetime import datetime
+from uuid import uuid4 # Para gerar IDs únicos
+from datetime import datetime # Para manipulação de datas
 
-tarefas = []
+tarefas = [] # Lista para armazenar as tarefas
 
 
 def _data_atual():
@@ -59,9 +59,20 @@ def editar_tarefa(id_tarefa, **novos_dados):
             return tarefa # Retorna a tarefa atualizada
 
     return None # Retorna None se a tarefa não for encontrada
- 
-def concluir_tarefa(id_tarefa):
-    pass
 
+# Função para concluir uma tarefa
+def concluir_tarefa(id_tarefa):
+     for tarefa in tarefas: # Percorre a lista de tarefas
+        if tarefa["id"] == id_tarefa:
+            tarefa["status"] = "concluida"
+            tarefa["data_conclusao"] = _data_atual()
+            return tarefa # Retorna a tarefa concluída
+     return None # Retorna None se a tarefa não for encontrada
+
+# Função para excluir uma tarefa
 def excluir_tarefa(id_tarefa):
-    pass
+    for tarefa in tarefas: 
+        if tarefa["id"] == id_tarefa:
+            tarefas.remove(tarefa)
+            return True # Retorna True se a tarefa for excluída com sucesso
+    return False # Retorna False se a tarefa não for encontrada
