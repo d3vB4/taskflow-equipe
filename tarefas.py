@@ -22,9 +22,25 @@ tarefa = {
         }
 
 # Funções para manipulação de tarefas
-def criar_tarefa(titulo, descricao, responsavel, prazo):
-    pass
 
+# Função para criar uma nova tarefa
+def criar_tarefa(titulo, descricao, responsavel, prazo):
+    nova_tarefa = {
+        "id": str(uuid4()), # Gera um ID único para a tarefa
+        "titulo": titulo,
+        "descricao": descricao,
+        "responsavel": responsavel,
+        "prazo": prazo,
+        "status": "pendente",
+        "data_criacao": _data_atual(), # Define a data de criação como a data atual
+        "data_conclusao": None
+    }
+
+    tarefas.append(nova_tarefa) # Adiciona a nova tarefa à lista de tarefas
+    return nova_tarefa # Retorna a nova tarefa criada
+
+
+#Função para listar todas as tarefas
 def listar_tarefas(incluir_concluidas=True):
     pass
 
