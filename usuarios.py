@@ -14,7 +14,7 @@ def cadastrar_usuario(nome: str | None = None, login: str | None = None, email: 
     login = input("Login: ") if login is None else login
     email = input("Email: ") if email is None else email
     senha = input("Senha: ") if senha is None else senha
-    setor = input("Setor (Recepçao, Enfermagem, Medico, Farmacia): ") if setor is None else setor 
+    setor = input("Setor (Recepção, Enfermagem, Médico, Farmácia): ") if setor is None else setor 
 
    # Valida os parâmetros obrigatórios 
    
@@ -32,8 +32,8 @@ def cadastrar_usuario(nome: str | None = None, login: str | None = None, email: 
     allowed = {
         'recepcao': 'recepção',
         'enfermagem': 'enfermagem',
-        'medicos': 'médicos',
-        'farmacias': 'farmácias',
+        'medicos': 'médico',
+        'farmacias': 'farmácia',
     }
     setor_normalizado = None
     if setor:
@@ -132,14 +132,5 @@ def realizar_login(login: str | None = None, senha: str | None = None) -> dict |
         return None
 
     return None
-
-
-if __name__ == "__main__":
-    # Exemplo de cadastro de dois usuários
-    cadastrar_usuario("Ana", "ana123", "ana@example.com", "123456", "recepção")
-    cadastrar_usuario("Beto", "beto456", "beto@example.com", "654321", "enfermagem")
-    print("Usuários cadastrados:")
-    for u in listar_usuarios():
-        print(u)
 
 
