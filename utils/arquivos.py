@@ -1,6 +1,6 @@
 import os
 
-def salvar_dados(nome_arquivo: str) -> None:
+def carregar_dados(nome_arquivo: str) -> None:
     if not os.path.exists(nome_arquivo):
         # Se o arquivo não existe, cria um vazio e retorna lista vazia
         salvar_dados([], nome_arquivo)
@@ -45,7 +45,7 @@ def salvar_dados(nome_arquivo: str) -> None:
         print(f"Erro ao processar o arquivo {nome_arquivo}: {e}")
         return []
 
-def carregar_dados(dados: list,nome_arquivo: str) -> bool:
+def salvar_dados(dados: list,nome_arquivo: str) -> bool:
     try:
         if not dados:
             # Se a lista está vazia, cria apenas o arquivo vazio
