@@ -87,26 +87,37 @@ def processar_menu_tarefas():
         opcao = exibir_menu_tarefas()
         
         if opcao == '1':
+            # CORREÇÃO: passar o usuario_logado como argumento
             tarefas.cadastrar_tarefa(usuario_logado)
+            aguardar()
         elif opcao == '2':
             tarefas.listar_tarefas(usuario_logado)
             input("\nPressione Enter para voltar...")
         elif opcao == '3':
             tarefas.editar_tarefa(usuario_logado)
+            aguardar()
         elif opcao == '4':
             tarefas.excluir_tarefa(usuario_logado)
+            aguardar()
         elif opcao == '5':
             tarefas.concluir_tarefa(usuario_logado)
+            aguardar()
         elif opcao == '6':
             # Sub-menu de relatórios (Dev 4)
             print("\n[Relatórios]")
             print("1. Tarefas Concluídas")
             print("2. Pendentes/Atrasadas")
+            print("3. Produtividade")
+            print("4. Exportar para TXT")
             sub = input("Opção: ")
             if sub == '1':
                 relatorios.gerar_relatorio_concluidas(usuario_logado)
             elif sub == '2':
                 relatorios.gerar_relatorio_pendentes(usuario_logado)
+            elif sub == '3':
+                relatorios.gerar_relatorio_produtividade(usuario_logado)
+            elif sub == '4':
+                relatorios.exportar_relatorio_txt(usuario_logado)
             input("\nPressione Enter para voltar...")
         elif opcao == '0':
             print("Saindo...")
@@ -145,6 +156,8 @@ def main():
         # Captura qualquer erro não previsto para o app não 'explodir' na cara do usuário
         print(f"\n\n[ERRO FATAL] Ocorreu um erro inesperado: {e}")
         print("Por favor, contate o suporte.")
+        import traceback
+        traceback.print_exc()  # Mostra o erro completo para debug
         sys.exit(1)
 
 if __name__ == "__main__":
