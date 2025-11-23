@@ -32,8 +32,8 @@ def cadastrar_usuario(nome: str | None = None, login: str | None = None, email: 
     allowed = {
         'recepcao': 'recepção',
         'enfermagem': 'enfermagem',
-        'medicos': 'médico',
-        'farmacias': 'farmácia',
+        'medico': 'médico',
+        'farmacia': 'farmácia',
     }
     setor_normalizado = None
     if setor:
