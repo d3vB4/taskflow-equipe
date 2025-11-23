@@ -62,6 +62,42 @@ def obter_usuario(id_usuario: str) -> dict | None:
 def listar_usuarios() -> list[dict]:
     """Retorna uma lista com todos os usuários cadastrados."""
     return list(usuarios.values())
+# --- FUNÇÃO AUXILIAR PARA BUSCAR USUÁRIO PELO LOGIN ---
+
+def buscar_usuario_por_login(login: str) -> dict | None:
+    """Retorna o usuário com o `login` informado, ou None se não existir."""
+    for u in usuarios.values():
+        if u.get('login') == login:
+            return u
+    return None
+# --- FUNÇÃO DE LOGIN ---
+
+
+def realizar_login(login: str | None = None, senha: str | None = None) -> dict | None:
+    """Tenta autenticar o usuário.
+
+    Se `login` ou `senha` forem None, solicita via `input()` para compatibilidade com o fluxo CLI.
+    Retorna o dicionário do usuário em caso de sucesso, ou `None` em caso de falha.
+    """
+    if login is None:
+        login = input("Login: ").strip()
+    if senha is None:
+        senha = input("Senha: ").strip()
+        # Busca o usuário pelo login
+
+    usuario = buscar_usuario_por_login(login)
+    if not usuario:
+        return None
+    # Verifica a senha
+
+    try:
+        if _hash_senha(senha) == usuario.get('senha'):
+            return usuario
+    except ValueError:
+        # Senha inválida (não numérica, por exemplo)
+        return None
+
+    return None
 
 
 if __name__ == "__main__":
