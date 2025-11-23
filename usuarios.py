@@ -5,6 +5,63 @@ import unicodedata # Para normalização de strings
 # Agora armazena múltiplos usuários por id
 usuarios = {}
 
+# Arquivo de persistência em texto simples (uma linha por usuário)
+USUARIOS_FILE = 'usuarios.txt'
+
+ #--- FUNÇÕES AUXILIARES DE PERSISTÊNCIA ---
+def _escape(field: str) -> str:
+    return field.replace('|', '<PIPE>').replace('\n', '<NL>') if field is not None else ''
+
+    #--- FUNÇÕES PRINCIPAIS DO MÓDULO ---
+def _unescape(field: str) -> str:
+    return field.replace('<PIPE>', '|').replace('<NL>', '\n') if field is not None else ''
+
+#--- FUNÇÕES DE PERSISTÊNCIA EM ARQUIVO TEXTO ---
+def _save_usuarios_to_file() -> None:
+    try:
+        with open(USUARIOS_FILE, 'w', encoding='utf-8') as f:
+            for u in usuarios.values():
+                parts = [
+                    u.get('id', ''),
+                    _escape(u.get('nome', '')),
+                    _escape(u.get('email', '')),
+                    _escape(u.get('login', '')),
+                    _escape(u.get('setor', '') or ''),
+                    _escape(u.get('senha', '') or ''),
+                    _escape(u.get('data_cadastro', '') or ''),
+                ]
+                f.write('|'.join(parts) + '\n')
+    except Exception:
+        # Não propagar exceções de I/O aqui
+        pass
+
+
+def _load_usuarios_from_file() -> None:
+    try:
+        with open(USUARIOS_FILE, 'r', encoding='utf-8') as f:
+            for line in f:
+                line = line.rstrip('\n')
+                if not line:
+                    continue
+                parts = line.split('|')
+                # Esperamos 7 campos: id, nome, email, login, setor, senha, data_cadastro
+                if len(parts) < 7:
+                    continue
+                id_u, nome, email, login_u, setor, senha_u, data_cadastro = parts[:7]
+                usuarios[id_u] = {
+                    'id': id_u,
+                    'nome': _unescape(nome),
+                    'email': _unescape(email),
+                    'login': _unescape(login_u),
+                    'setor': _unescape(setor) or None,
+                    'senha': _unescape(senha_u) or None,
+                    'data_cadastro': _unescape(data_cadastro) or None,
+                }
+    except Exception:
+        # Arquivo pode não existir ou estar corrompido; apenas ignoramos
+        return
+
+
 def _hash_senha(senha: str) -> str:
     return hashlib.sha256(senha.encode('utf-8')).hexdigest()
 
@@ -44,6 +101,8 @@ def cadastrar_usuario(nome: str | None = None, login: str | None = None, email: 
 
      # Gera um ID único para o usuário
     novo_id = str(uuid.uuid4())
+    # Mantemos campo de data sem usar imports adicionais
+    data_cadastro = ''
     novo_usuario = {
         'id': novo_id,
         'nome': nome,
@@ -51,8 +110,11 @@ def cadastrar_usuario(nome: str | None = None, login: str | None = None, email: 
         'login': login,
         'setor': setor_normalizado,
         'senha': _hash_senha(senha),
+        'data_cadastro': data_cadastro,
     }
     usuarios[novo_id] = novo_usuario
+    # Persiste em arquivo texto
+    _save_usuarios_to_file()
     return novo_usuario
      #
 
@@ -132,5 +194,9 @@ def realizar_login(login: str | None = None, senha: str | None = None) -> dict |
         return None
 
     return None
+
+
+# Carrega usuários do arquivo texto ao importar o módulo
+_load_usuarios_from_file()
 
 

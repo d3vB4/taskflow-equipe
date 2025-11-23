@@ -1,6 +1,27 @@
 import datetime
 import usuarios
 import tarefas
+import os
+
+
+def confirmacao_concluida(tarefa: dict) -> bool:
+    """Retorna True se a tarefa estiver concluída.
+
+    Aceita diferentes representações: campo booleano 'concluida', ou
+    string no campo 'status' (ex.: 'Concluída', 'Concluida', 'concluida').
+    """
+    if not tarefa:
+        return False
+    # checa campo booleano, se presente
+    v = tarefa.get('concluida')
+    if isinstance(v, bool):
+        return v
+    # verifica o campo status (string) com normalização
+    status = tarefa.get('status')
+    if not status:
+        return False
+    status_lower = str(status).lower()
+    return status_lower in ('concluida', 'concluída', 'concluido', 'concluído', 'done', '1', 'true', 'sim')
 
 def imprimir_cabecalho(titulo):
     """Padroniza o título dos relatórios."""
@@ -29,7 +50,7 @@ def buscar_usuario(id_usuario):
     return usuario['nome'] if usuario else "Usuário Removido"
 
 # RELATÓRIO 1: CONCLUÍDAS 
-def gerar_relatorio_concluidas(usuario_filtro=None):
+def gerar_relatorio_concluidos(usuario_filtro=None):
     """
     Lista tarefas concluídas, mostrando data e calculando o tempo médio de execução.
     """
@@ -39,7 +60,7 @@ def gerar_relatorio_concluidas(usuario_filtro=None):
     
     imprimir_cabecalho(titulo)
 
-    lista_alvo = tarefas.tarefas
+    lista_alvo = tarefas._carregar_tarefas()
     concluidas_count = 0
     tempo_total_dias = 0
     qtd_com_calculo = 0
@@ -49,7 +70,7 @@ def gerar_relatorio_concluidas(usuario_filtro=None):
 
     for tarefa in lista_alvo:
         # 1. Filtro de Status 
-        if tarefa.get('status') != 'concluida':
+        if not confirmacao_concluida(tarefa):
             continue
 
         # 2. Filtro de Usuário
@@ -77,7 +98,7 @@ def gerar_relatorio_concluidas(usuario_filtro=None):
         print(">> Nenhuma tarefa concluída encontrada.")
     else:
         print(f"Total concluídas: {concluidas_count}")
-        # Cálculo da Média (feature do código antigo)
+        # Cálculo da Média
         if qtd_com_calculo > 0:
             media = tempo_total_dias / qtd_com_calculo
             print(f"Tempo médio de execução: {int(media)} dias")
@@ -96,7 +117,7 @@ def gerar_relatorio_pendentes(usuario_filtro=None):
     
     imprimir_cabecalho(titulo)
 
-    lista_alvo = tarefas.tarefas
+    lista_alvo = tarefas._carregar_tarefas()
     hoje = datetime.datetime.now()
     
     pendentes_count = 0
@@ -111,18 +132,18 @@ def gerar_relatorio_pendentes(usuario_filtro=None):
 
     for tarefa in lista_alvo:
         # Lógica para contar totais do usuário (para a porcentagem no final)
-        eh_do_usuario = True
+        pertence_ao_usuario = True
         if usuario_filtro and tarefa.get('responsavel') != usuario_filtro.get('id'):
-            eh_do_usuario = False
+            pertence_ao_usuario = False
         
-        if eh_do_usuario:
+        if pertence_ao_usuario:
             total_tarefas_usuario += 1
-            if tarefa.get('status') == 'concluida':
+            if confirmacao_concluida(tarefa):
                 total_concluidas_usuario += 1
                 continue # Se está concluída, não lista no relatório de pendências
 
         # Se não for do usuário (quando tem filtro) ou se já está concluída, pula visualização
-        if not eh_do_usuario or tarefa.get('status') == 'concluida':
+        if not pertence_ao_usuario or confirmacao_concluida(tarefa):
             continue
 
         # Daqui pra baixo é apenas tarefa PENDENTE do usuário selecionado (ou geral)
@@ -158,26 +179,40 @@ def gerar_relatorio_pendentes(usuario_filtro=None):
 
 
 # RELATÓRIO 3: PRODUTIVIDADE DA EQUIPE 
-def gerar_relatorio_produtividade():
+def gerar_relatorio_produtividade(usuario_filtro=None):
     """
     Relatório gerencial de ranking de tarefas por usuário.
+    Ignora o filtro de usuário individual pois é um relatório de equipe.
     """
     imprimir_cabecalho("PRODUTIVIDADE DA EQUIPE (RANKING)")
 
-    # 1. Inicializar contadores com todos os usuários do sistema
+    # 1. Inicializar contadores
     contagem = {}
-    todos_usuarios = usuarios.listar_usuarios()
     
+    try:
+        todos_usuarios = usuarios.listar_usuarios()
+    except AttributeError:
+        todos_usuarios = [] 
+        print("Aviso: Não foi possível carregar lista completa de usuários.")
+
     for u in todos_usuarios:
         contagem[u['id']] = {'nome': u['nome'], 'concluidas': 0}
 
-    # 2. Contar tarefas concluídas varrendo a lista de tarefas
+    # 2. Contar tarefas concluídas
+    lista_alvo = tarefas._carregar_tarefas()
     total_geral = 0
-    for tarefa in tarefas.tarefas:
-        if tarefa.get('status') == 'concluida':
+    
+    for tarefa in lista_alvo:
+        status_lower = tarefa.get('status', '').lower()
+        if status_lower == 'concluída' or status_lower == 'concluida':
             resp_id = tarefa.get('responsavel')
-            if resp_id in contagem:
-                contagem[resp_id]['concluidas'] += 1
+            
+            # Se o usuário não estiver na lista (ex: removido ou erro de carga), adiciona
+            if resp_id not in contagem:
+                 nome_resp = buscar_usuario(resp_id)
+                 contagem[resp_id] = {'nome': nome_resp, 'concluidas': 0}
+            
+            contagem[resp_id]['concluidas'] += 1
             total_geral += 1
 
     # 3. Ordenar e Exibir
@@ -188,8 +223,39 @@ def gerar_relatorio_produtividade():
 
     for item in ranking:
         qtd = item['concluidas']
-        barra = "█" * qtd 
+        barra = " " * qtd 
         print(f"{item['nome']:<25} | {qtd:^3} | {barra}")
 
     print("-" * 60)
     print(f"Total de entregas da equipe: {total_geral}")
+
+# RELATÓRIO 4: EXPORTAR PARA TXT
+def exportar_relatorio_txt(usuario_logado):
+    """
+    Gera um arquivo TXT com o resumo das tarefas.
+    """
+    imprimir_cabecalho("EXPORTAR RELATÓRIO")
+    
+    nome_arquivo = f"relatorio_{usuario_logado['nome']}_{datetime.datetime.now().strftime('%Y%m%d')}.txt"
+    lista_alvo = tarefas._carregar_tarefas()
+    
+    try:
+        with open(nome_arquivo, 'w', encoding='utf-8') as f:
+            f.write(f"RELATÓRIO DE TAREFAS - {usuario_logado['nome']}\n")
+            f.write(f"Gerado em: {datetime.datetime.now()}\n")
+            f.write("="*40 + "\n\n")
+            
+            tarefas_usuario = [t for t in lista_alvo if t['responsavel'] == usuario_logado['id']]
+            
+            if not tarefas_usuario:
+                f.write("Nenhuma tarefa encontrada.\n")
+            else:
+                for t in tarefas_usuario:
+                    f.write(f"[{t['status']}] {t['titulo']}\n")
+                    f.write(f"Prazo: {t['prazo']} | Conclusão: {t['data_conclusao'] or '---'}\n")
+                    f.write(f"Descrição: {t['descricao']}\n")
+                    f.write("-" * 20 + "\n")
+        
+        print(f"Arquivo exportado com sucesso: {nome_arquivo}")
+    except Exception as e:
+        print(f"Erro ao exportar arquivo: {e}")
