@@ -70,6 +70,40 @@ def buscar_usuario_por_login(login: str) -> dict | None:
         if u.get('login') == login:
             return u
     return None
+
+
+def procurar_usuario(campo: str | None = None, termo: str | None = None) -> list[dict]:
+ # Procura usuários pelo campo e termo fornecidos. Se `campo` ou `termo` forem None, solicita via `input()` para compatibilidade
+    allowed = {'id', 'nome', 'login', 'email', 'setor'}
+     # Valida o campo
+    if campo is None:
+        campo = input(f"Campo para buscar ({', '.join(allowed)}): ").strip().lower()
+        # Normaliza o campo
+    else:
+        campo = campo.strip().lower()
+
+    if campo not in allowed:
+        raise ValueError(f"Campo inválido: {campo}. Use um entre: {', '.join(allowed)}")
+
+    if termo is None:
+        termo = input("Termo de busca: ").strip()
+
+    termo_norm = termo.lower()
+    resultados: list[dict] = []
+        # Busca nos usuários
+
+    for u in usuarios.values():
+        valor = u.get(campo)
+        if valor is None:
+            continue
+        if campo == 'id':
+            if str(valor) == termo:
+                resultados.append(u)
+        else:
+            if termo_norm in str(valor).lower():
+                resultados.append(u)
+
+    return resultados
 # --- FUNÇÃO DE LOGIN ---
 
 
