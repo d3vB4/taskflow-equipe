@@ -2,6 +2,8 @@ import datetime
 from utils import arquivos
 import ast # Importante para converter a string do txt em dicionário
 
+# Nota: Não precisamos mais importar 'salvar_dados' aqui, pois não vamos salvar em arquivo.
+
 def carregar_tarefas_do_usuario(id_usuario):
     """Função auxiliar para ler o arquivo e filtrar tarefas do usuário."""
     # Carrega as strings do arquivo usando o módulo arquivos
@@ -44,7 +46,7 @@ def gerar_relatorio_concluidas(usuario):
             print(f"- {t['titulo']} (Feita em: {data_fim})")
             
             # Cálculo de produtividade (tempo médio)
-            if data_fim:
+            if data_fim and data_fim != 'N/A': # Adicionado != 'N/A' para robustez
                 try:
                     c = t['data_criacao'].split('/')
                     data_c = datetime.datetime(int(c[2]), int(c[1]), int(c[0]))
@@ -56,6 +58,7 @@ def gerar_relatorio_concluidas(usuario):
                     tempo_total_dias += tempo.days
                     qtd_com_data += 1
                 except:
+                    # Ignora se houver erro de formato nas datas
                     pass
 
     if concluidas == 0:
