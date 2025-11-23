@@ -62,6 +62,76 @@ def obter_usuario(id_usuario: str) -> dict | None:
 def listar_usuarios() -> list[dict]:
     """Retorna uma lista com todos os usuários cadastrados."""
     return list(usuarios.values())
+# --- FUNÇÃO AUXILIAR PARA BUSCAR USUÁRIO PELO LOGIN ---
+
+def buscar_usuario_por_login(login: str) -> dict | None:
+    """Retorna o usuário com o `login` informado, ou None se não existir."""
+    for u in usuarios.values():
+        if u.get('login') == login:
+            return u
+    return None
+
+
+def procurar_usuario(campo: str | None = None, termo: str | None = None) -> list[dict]:
+ # Procura usuários pelo campo e termo fornecidos. Se `campo` ou `termo` forem None, solicita via `input()` para compatibilidade
+    allowed = {'id', 'nome', 'login', 'email', 'setor'}
+     # Valida o campo
+    if campo is None:
+        campo = input(f"Campo para buscar ({', '.join(allowed)}): ").strip().lower()
+        # Normaliza o campo
+    else:
+        campo = campo.strip().lower()
+
+    if campo not in allowed:
+        raise ValueError(f"Campo inválido: {campo}. Use um entre: {', '.join(allowed)}")
+
+    if termo is None:
+        termo = input("Termo de busca: ").strip()
+
+    termo_norm = termo.lower()
+    resultados: list[dict] = []
+        # Busca nos usuários
+
+    for u in usuarios.values():
+        valor = u.get(campo)
+        if valor is None:
+            continue
+        if campo == 'id':
+            if str(valor) == termo:
+                resultados.append(u)
+        else:
+            if termo_norm in str(valor).lower():
+                resultados.append(u)
+
+    return resultados
+# --- FUNÇÃO DE LOGIN ---
+
+
+def realizar_login(login: str | None = None, senha: str | None = None) -> dict | None:
+    """Tenta autenticar o usuário.
+
+    Se `login` ou `senha` forem None, solicita via `input()` para compatibilidade com o fluxo CLI.
+    Retorna o dicionário do usuário em caso de sucesso, ou `None` em caso de falha.
+    """
+    if login is None:
+        login = input("Login: ").strip()
+    if senha is None:
+        senha = input("Senha: ").strip()
+        # Busca o usuário pelo login
+
+    usuario = buscar_usuario_por_login(login)
+    if not usuario:
+        return None
+    # Verifica a senha
+
+    try:
+        if _hash_senha(senha) == usuario.get('senha'):
+            return usuario
+    except ValueError:
+        # Senha inválida (não numérica, por exemplo)
+        return None
+
+    return None
 
 
 if __name__ == "__main__":
