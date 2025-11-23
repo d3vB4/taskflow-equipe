@@ -73,7 +73,7 @@ def fluxo_cadastro():
     """Gerencia o cadastro usando o módulo usuarios."""
     print("\n--- NOVO USUÁRIO ---")
     # Chama a função do Dev 2
-    if usuarios.cadastra1r_usuario():
+    if usuarios.cadastrar_usuario():
         print("Usuário cadastrado com sucesso! Faça login para entrar.")
     else:
         print("Erro ao cadastrar usuário.")

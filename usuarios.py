@@ -6,18 +6,17 @@ import unicodedata # Para normalização de strings
 usuarios = {}
 
 # Arquivo de persistência em texto simples (uma linha por usuário)
-# Usamos um nome de arquivo relativo e `open()` para não adicionar imports
 USUARIOS_FILE = 'usuarios.txt'
 
-
+ #--- FUNÇÕES AUXILIARES DE PERSISTÊNCIA ---
 def _escape(field: str) -> str:
     return field.replace('|', '<PIPE>').replace('\n', '<NL>') if field is not None else ''
 
-
+    #--- FUNÇÕES PRINCIPAIS DO MÓDULO ---
 def _unescape(field: str) -> str:
     return field.replace('<PIPE>', '|').replace('<NL>', '\n') if field is not None else ''
 
-
+#--- FUNÇÕES DE PERSISTÊNCIA EM ARQUIVO TEXTO ---
 def _save_usuarios_to_file() -> None:
     try:
         with open(USUARIOS_FILE, 'w', encoding='utf-8') as f:
