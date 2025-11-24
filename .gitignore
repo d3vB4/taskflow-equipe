@@ -205,3 +205,11 @@ cython_debug/
 marimo/_static/
 marimo/_lsp/
 __marimo__/
+
+# TaskFlow - Arquivos de dados do projeto
+# Não versionar dados de usuários e tarefas
+usuarios.txt
+tarefas.txt
+*.json
+relatorio_*.txt
+!README.md

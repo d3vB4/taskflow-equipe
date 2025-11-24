@@ -1,0 +1,173 @@
+{% extends "base.html" %}
+
+{% block title %}Cadastro de Usuário - TaskFlow Hospital{% endblock %}
+
+{% block extra_css %}
+<style>
+    .cadastro-container {
+        max-width: 600px;
+        margin: 40px auto;
+    }
+
+    .cadastro-card {
+        padding: 40px;
+        border: 1px solid #e0e0e0;
+        border-radius: 16px;
+        background: white;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    }
+
+    .form-label {
+        font-weight: 600;
+        color: #333;
+    }
+
+    .form-control,
+    .form-select {
+        border-radius: 8px;
+        border: 2px solid #e0e0e0;
+        padding: 12px;
+    }
+
+    .form-control:focus,
+    .form-select:focus {
+        border-color: #0066CC;
+        box-shadow: 0 0 0 3px rgba(0, 102, 204, 0.1);
+    }
+
+    .btn-cadastrar {
+        padding: 14px;
+        font-size: 1.1rem;
+        border-radius: 8px;
+        font-weight: 600;
+    }
+
+    .info-box {
+        background: #f8f9fa;
+        border-left: 4px solid #0066CC;
+        padding: 15px;
+        border-radius: 8px;
+        margin-bottom: 25px;
+    }
+
+    .info-box i {
+        color: #0066CC;
+        font-size: 1.2rem;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="cadastro-container">
+    <div class="cadastro-card">
+        <div class="text-center mb-4">
+            <i class="bi bi-person-plus-fill" style="font-size: 3.5rem; color: #0066CC;"></i>
+            <h2 class="mt-3">Cadastro de Usuário</h2>
+            <p class="text-muted">TaskFlow Hospital</p>
+        </div>
+
+        <div class="info-box">
+            <i class="bi bi-info-circle-fill"></i>
+            <strong>Bem-vindo!</strong><br>
+            <small>Preencha os dados abaixo para criar sua conta no sistema.</small>
+        </div>
+
+        <form method="POST" action="{{ url_for('cadastro_publico') }}">
+            <div class="mb-3">
+                <label class="form-label">
+                    <i class="bi bi-person"></i> Nome Completo *
+                </label>
+                <input type="text" name="nome" class="form-control" placeholder="Digite seu nome completo" required
+                    autofocus>
+            </div>
+
+            <div class="mb-3">
+                <label class="form-label">
+                    <i class="bi bi-card-text"></i> Login / CPF *
+                </label>
+                <input type="text" name="login" class="form-control" placeholder="Digite seu login ou CPF" required>
+                <small class="text-muted">Este será seu identificador para fazer login</small>
+            </div>
+
+            <div class="mb-3">
+                <label class="form-label">
+                    <i class="bi bi-envelope"></i> E-mail
+                </label>
+                <input type="email" name="email" class="form-control" placeholder="seu.email@exemplo.com">
+            </div>
+
+            <div class="mb-3">
+                <label class="form-label">
+                    <i class="bi bi-lock"></i> Senha *
+                </label>
+                <input type="password" name="senha" class="form-control" placeholder="Digite uma senha segura" required>
+            </div>
+
+            <div class="mb-3">
+                <label class="form-label">
+                    <i class="bi bi-building"></i> Setor *
+                </label>
+                <select class="form-select" name="setor" id="setor-select" required>
+                    <option value="">Selecione seu setor...</option>
+                    <option value="recepção">Recepção</option>
+                    <option value="médico">Médico</option>
+                    <option value="farmácia">Farmácia</option>
+                    <option value="enfermagem">Enfermagem</option>
+                </select>
+            </div>
+
+            <div class="mb-3 d-none" id="especialidade-group">
+                <label class="form-label">
+                    <i class="bi bi-stethoscope"></i> Especialidade (apenas para médicos) *
+                </label>
+                <input type="text" name="especialidade" class="form-control"
+                    placeholder="Ex.: Cardiologia, Ortopedia, Pediatria">
+                <small class="text-muted">Informe sua especialidade médica</small>
+            </div>
+
+            <div class="d-grid gap-2 mt-4">
+                <button type="submit" class="btn btn-primary btn-cadastrar">
+                    <i class="bi bi-check-circle"></i> Criar Conta
+                </button>
+                <a href="{{ url_for('login') }}" class="btn btn-outline-secondary">
+                    <i class="bi bi-arrow-left"></i> Voltar para Login
+                </a>
+            </div>
+        </form>
+
+        <hr class="my-4">
+
+        <div class="text-center">
+            <small class="text-muted">
+                Já tem uma conta?
+                <a href="{{ url_for('login') }}" class="text-decoration-none fw-bold">
+                    Faça login aqui
+                </a>
+            </small>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    const setorSelect = document.getElementById('setor-select');
+    const espGroup = document.getElementById('especialidade-group');
+    const espInput = espGroup.querySelector('input');
+
+    if (setorSelect) {
+        const toggleEspecialidade = () => {
+            if (setorSelect.value === 'médico') {
+                espGroup.classList.remove('d-none');
+                espInput.required = true;
+            } else {
+                espGroup.classList.add('d-none');
+                espInput.required = false;
+            }
+        };
+
+        setorSelect.addEventListener('change', toggleEspecialidade);
+        toggleEspecialidade(); // Estado inicial
+    }
+</script>
+{% endblock %}

@@ -1,126 +1,238 @@
-import uuid  # Para gerar IDs únicos
-import getpass # Para esconder a senha
-import re # Para validar email
-from utils import arquivos # Importa o trabalho do Dev 4
+import uuid # Para gerar IDs únicos
+import hashlib # Para hash de senhas
+import unicodedata # Para normalização de strings
 
-# (Card 8) Constante para o nome do arquivo
-ARQUIVO_USUARIOS = "usuarios.json"
+# Agora armazena múltiplos usuários por id
+usuarios = {}
 
-# --- (Card 11) Funções de Validação ---
+# Arquivo de persistência em texto simples (uma linha por usuário)
+USUARIOS_FILE = 'usuarios.txt'
 
-def _validar_email(email: str) -> bool:
-    """Valida se um email está em um formato básico correto."""
-    # Expressão regular simples para validar email
-    regex = r'^[a-z0-9]+[\._]?[a-z0-9]+[@]\w+[.]\w{2,3}$'
-    return re.search(regex, email)
+ #--- FUNÇÕES AUXILIARES DE PERSISTÊNCIA ---
+def _escape(field: str) -> str:
+    return field.replace('|', '<PIPE>').replace('\n', '<NL>') if field is not None else ''
 
-def _validar_login_disponivel(login: str, todos_usuarios: list) -> bool:
-    """Verifica se um login já existe na lista de usuários."""
-    for u in todos_usuarios:
-        if u['login'] == login:
-            return False # Não está disponível
-    return True # Está disponível
+    #--- FUNÇÕES PRINCIPAIS DO MÓDULO ---
+def _unescape(field: str) -> str:
+    return field.replace('<PIPE>', '|').replace('<NL>', '\n') if field is not None else ''
 
-def _buscar_usuario_por_login(login: str, todos_usuarios: list):
-    """Busca e retorna um usuário pelo login."""
-    for u in todos_usuarios:
-        if u['login'] == login:
-            return u
-    return None
+#--- FUNÇÕES DE PERSISTÊNCIA EM ARQUIVO TEXTO ---
+def _save_usuarios_to_file() -> None:
+    try:
+        with open(USUARIOS_FILE, 'w', encoding='utf-8') as f:
+            for u in usuarios.values():
+                parts = [
+                    u.get('id', ''),
+                    _escape(u.get('nome', '')),
+                    _escape(u.get('email', '')),
+                    _escape(u.get('login', '')),
+                    _escape(u.get('setor', '') or ''),
+                    _escape(u.get('senha', '') or ''),
+                    _escape(u.get('data_cadastro', '') or ''),
+                    _escape(u.get('crm', '') or ''),  # Campo para médicos
+                    _escape(u.get('especialidade', '') or ''),  # Campo para médicos
+                    _escape(u.get('disponivel', '') or ''),  # Campo para médicos
+                ]
+                f.write('|'.join(parts) + '\n')
+    except Exception:
+        # Não propagar exceções de I/O aqui
+        pass
 
-# --- (Card 9) Função de Cadastro ---
 
-def cadastrar_usuario() -> bool:
-    """
-    Processo completo de cadastro de um novo usuário.
-    Pede os dados, valida e salva no JSON.
-    """
-    print("--- Novo Cadastro ---")
-    nome = input("Nome completo: ")
-    email = input("Email: ")
-    login = input("Login (mín. 4 caracteres): ")
-    
-    # Validações
-    if not nome:
-        print("Erro: O nome não pode ficar em branco.")
-        return False
-        
-    if not _validar_email(email):
-        print("Erro: Formato de email inválido.")
-        return False
+def _load_usuarios_from_file() -> None:
+    try:
+        with open(USUARIOS_FILE, 'r', encoding='utf-8') as f:
+            for line in f:
+                line = line.rstrip('\n')
+                if not line:
+                    continue
+                parts = line.split('|')
+                # Esperamos 10 campos: id, nome, email, login, setor, senha, data_cadastro, crm, especialidade, disponivel
+                if len(parts) < 7:
+                    continue
+                
+                # Campos básicos (compatibilidade com formato antigo)
+                id_u, nome, email, login_u, setor, senha_u, data_cadastro = parts[:7]
+                
+                # Campos adicionais para médicos (se existirem)
+                crm = parts[7] if len(parts) > 7 else ''
+                especialidade = parts[8] if len(parts) > 8 else ''
+                disponivel = parts[9] if len(parts) > 9 else ''
+                
+                usuarios[id_u] = {
+                    'id': id_u,
+                    'nome': _unescape(nome),
+                    'email': _unescape(email),
+                    'login': _unescape(login_u),
+                    'setor': _unescape(setor) or None,
+                    'senha': _unescape(senha_u) or None,
+                    'data_cadastro': _unescape(data_cadastro) or None,
+                    'crm': _unescape(crm) or None,
+                    'especialidade': _unescape(especialidade) or None,
+                    'disponivel': _unescape(disponivel) or None,
+                }
+    except Exception:
+        # Arquivo pode não existir ou estar corrompido; apenas ignoramos
+        return
 
-    if len(login) < 4:
-        print("Erro: O login deve ter pelo menos 4 caracteres.")
-        return False
 
-    # (Card 18) Carrega dados usando o módulo de arquivos
-    todos_usuarios = arquivos.carregar_dados(ARQUIVO_USUARIOS)
-    
-    if not _validar_login_disponivel(login, todos_usuarios):
-        print("Erro: Este login já está em uso. Tente outro.")
-        return False
+def _hash_senha(senha: str) -> str:
+    return hashlib.sha256(senha.encode('utf-8')).hexdigest()
 
-    # Senha
-    senha = getpass.getpass("Senha (mín. 6 caracteres): ")
-    if len(senha) < 6:
-        print("Erro: A senha deve ter pelo menos 6 caracteres.")
-        return False
-    senha_confirma = getpass.getpass("Confirme a senha: ")
+def cadastrar_usuario(nome: str | None = None, login: str | None = None, email: str | None = None, 
+                      senha: str | None = None, setor: str | None = None, 
+                      crm: str | None = None, especialidade: str | None = None, 
+                      disponivel: bool = True) -> dict:
+    # Solicita os dados do usuário se não fornecidos
+    nome = input("Nome: ") if nome is None else nome
+    login = input("Login: ") if login is None else login
+    email = input("Email: ") if email is None else email
+    senha = input("Senha: ") if senha is None else senha
+    setor = input("Setor (Recepção, Enfermagem, Médico, Farmácia): ") if setor is None else setor 
 
-    if senha != senha_confirma:
-        print("Erro: As senhas não coincidem.")
-        return False
-        
-    # (Card 8) Estrutura do usuário
-    novo_usuario = {
-        "id": str(uuid.uuid4()), # Gera um ID único
-        "nome": nome,
-        "email": email,
-        "login": login,
-        "senha": senha, # ATENÇÃO: Em um app real, isso DEVE ser hasheado (ex: hashlib)
-        "data_cadastro": str(uuid.uuid4()) # Simula uma data
+   # Valida os parâmetros obrigatórios 
+   
+    missing = [k for k, v in(("nome", nome), ("login", login), ("email", email), ("senha", senha), ("setor", setor)) if not v]
+    if missing:
+        raise ValueError(
+            "Parâmetros ausentes para cadastrar_usuario: "
+            f"{', '.join(missing)}. Use cadastrar_usuario(nome, login, email, senha, setor)."
+        )
+
+     # Normaliza e valida o setor
+    def _normalize(s: str) -> str:
+        return unicodedata.normalize('NFKD', s).encode('ASCII', 'ignore').decode().lower().strip()
+      ## Validação do setor
+    allowed = {
+        'recepcao': 'recepção',
+        'enfermagem': 'enfermagem',
+        'medico': 'médico',
+        'farmacia': 'farmácia',
+        'paciente': 'paciente',
     }
-    
-    todos_usuarios.append(novo_usuario)
-    
-    # (Card 18) Salva dados usando o módulo de arquivos
-    if arquivos.salvar_dados(todos_usuarios, ARQUIVO_USUARIOS):
-        return True
-    else:
-        print("Erro: Falha ao salvar o novo usuário.")
-        return False
+    setor_normalizado = None
+    if setor:
+        key = _normalize(setor)
+        if key not in allowed:
+            raise ValueError(f"Setor inválido: {setor}. Opções válidas: {', '.join(allowed.values())}.")
+        setor_normalizado = allowed[key]
 
-# --- (Card 10) Função de Login ---
+    # Se for médico e não tiver especialidade, solicita
+    if setor_normalizado == 'médico' and especialidade is None:
+        especialidade = input("Especialidade: ").strip()
 
-def realizar_login():
-    """
-    Processo de login. Pede credenciais e valida.
-    
-    Returns:
-        dict: O dicionário do usuário logado, se o login for bem-sucedido.
-        None: Se o login falhar.
-    """
-    login = input("Login: ")
-    senha = getpass.getpass("Senha: ")
+     # Gera um ID único para o usuário
+    novo_id = str(uuid.uuid4())
+    # Mantemos campo de data sem usar imports adicionais
+    data_cadastro = ''
+    novo_usuario = {
+        'id': novo_id,
+        'nome': nome,
+        'email': email,
+        'login': login,
+        'setor': setor_normalizado,
+        'senha': _hash_senha(senha),
+        'data_cadastro': data_cadastro,
+        'crm': crm,
+        'especialidade': especialidade,
+        'disponivel': 'true' if disponivel else 'false' if crm else None,
+    }
+    usuarios[novo_id] = novo_usuario
+    # Persiste em arquivo texto
+    _save_usuarios_to_file()
+    return novo_usuario
+     #
 
-    todos_usuarios = arquivos.carregar_dados(ARQUIVO_USUARIOS)
-    
-    usuario_encontrado = _buscar_usuario_por_login(login, todos_usuarios)
-    
-    if usuario_encontrado:
-        # ATENÇÃO: Em um app real, compararíamos o hash da senha
-        if usuario_encontrado['senha'] == senha:
-            # Retorna o dicionário completo do usuário para o main.py
-            return usuario_encontrado 
-            
-    return None # Falha no login (usuário não encontrado ou senha errada)
+def obter_usuario(id_usuario: str) -> dict | None:
+    return usuarios.get(id_usuario)
 
-# --- (Card 12) Funções de Consulta (Opcionais) ---
+def listar_usuarios() -> list[dict]:
+    """Retorna uma lista com todos os usuários cadastrados."""
+    return list(usuarios.values())
+# --- FUNÇÃO AUXILIAR PARA BUSCAR USUÁRIO PELO LOGIN ---
 
-def buscar_usuario_por_id(user_id: str):
-    """Busca e retorna um usuário pelo seu ID."""
-    todos_usuarios = arquivos.carregar_dados(ARQUIVO_USUARIOS)
-    for u in todos_usuarios:
-        if u['id'] == user_id:
+def buscar_usuario_por_login(login: str) -> dict | None:
+    """Retorna o usuário com o `login` informado, ou None se não existir."""
+    for u in usuarios.values():
+        if u.get('login') == login:
             return u
     return None
+
+
+def procurar_usuario(campo: str | None = None, termo: str | None = None) -> list[dict]:
+ # Procura usuários pelo campo e termo fornecidos. Se `campo` ou `termo` forem None, solicita via `input()` para compatibilidade
+    allowed = {'id', 'nome', 'login', 'email', 'setor'}
+     # Valida o campo
+    if campo is None:
+        campo = input(f"Campo para buscar ({', '.join(allowed)}): ").strip().lower()
+        # Normaliza o campo
+    else:
+        campo = campo.strip().lower()
+
+    if campo not in allowed:
+        raise ValueError(f"Campo inválido: {campo}. Use um entre: {', '.join(allowed)}")
+
+    if termo is None:
+        termo = input("Termo de busca: ").strip()
+
+    termo_norm = termo.lower()
+    resultados: list[dict] = []
+        # Busca nos usuários
+
+    for u in usuarios.values():
+        valor = u.get(campo)
+        if valor is None:
+            continue
+        if campo == 'id':
+            if str(valor) == termo:
+                resultados.append(u)
+        else:
+            if termo_norm in str(valor).lower():
+                resultados.append(u)
+
+    return resultados
+# --- FUNÇÃO DE LOGIN ---
+
+
+def realizar_login(login: str | None = None, senha: str | None = None) -> dict | None:
+    """Tenta autenticar o usuário.
+
+    Se `login` ou `senha` forem None, solicita via `input()` para compatibilidade com o fluxo CLI.
+    Retorna o dicionário do usuário em caso de sucesso, ou `None` em caso de falha.
+    """
+    if login is None:
+        login = input("Login: ").strip()
+    if senha is None:
+        senha = input("Senha: ").strip()
+        # Busca o usuário pelo login
+
+    usuario = buscar_usuario_por_login(login)
+    if not usuario:
+        return None
+    # Verifica a senha
+
+    try:
+        if _hash_senha(senha) == usuario.get('senha'):
+            return usuario
+    except ValueError:
+        # Senha inválida (não numérica, por exemplo)
+        return None
+
+    return None
+
+
+# --- FUNÇÕES AUXILIARES PARA MÉDICOS ---
+
+def listar_especialidades() -> list[str]:
+    """Retorna uma lista única de especialidades dos médicos cadastrados."""
+    especialidades = set()
+    for u in usuarios.values():
+        # Verifica se é médico e tem especialidade definida
+        if u.get('setor') == 'médico' and u.get('especialidade'):
+            especialidades.add(u.get('especialidade'))
+    return sorted(list(especialidades))
+
+# Carrega usuários do arquivo texto ao importar o módulo
+_load_usuarios_from_file()
+
+

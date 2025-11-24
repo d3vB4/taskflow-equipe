@@ -1,0 +1,55 @@
+{% extends "base.html" %}
+
+{% block title %}Novo Paciente - TaskFlow Hospital{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card">
+                <div class="card-header bg-primary text-white">
+                    <h4 class="mb-0"><i class="bi bi-person-plus"></i> Cadastrar Novo Paciente</h4>
+                </div>
+                <div class="card-body">
+                    <form method="POST" action="{{ url_for('novo_paciente') }}">
+                        <div class="mb-3">
+                            <label for="titulo" class="form-label">Nome do Paciente / Procedimento *</label>
+                            <input type="text" class="form-control" id="titulo" name="titulo"
+                                placeholder="Ex: João Silva - Consulta Cardiologia" required>
+                            <small class="text-muted">Identificação do atendimento</small>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="descricao" class="form-label">Observações</label>
+                            <textarea class="form-control" id="descricao" name="descricao" rows="3"
+                                placeholder="Informações adicionais sobre o atendimento"></textarea>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="prazo" class="form-label">Prazo Estimado *</label>
+                            <input type="text" class="form-control" id="prazo" name="prazo" placeholder="dd/mm/yyyy"
+                                required>
+                            <small class="text-muted">Formato: dd/mm/yyyy</small>
+                        </div>
+
+                        <div class="alert alert-info">
+                            <i class="bi bi-info-circle"></i>
+                            <strong>Informação:</strong> O paciente será automaticamente associado ao seu setor
+                            ({{ session.usuario_setor }}).
+                        </div>
+
+                        <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                            <a href="{{ url_for('pacientes') }}" class="btn btn-secondary">
+                                <i class="bi bi-x-circle"></i> Cancelar
+                            </a>
+                            <button type="submit" class="btn btn-primary">
+                                <i class="bi bi-check-circle"></i> Cadastrar
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

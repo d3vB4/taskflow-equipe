@@ -1,0 +1,11 @@
+a1270a95-0f84-4c8d-9a06-4c45fd0c1bca|Alexandre|a@a.com|alex|recepção|a665a45920422f9d417e4867efdc4fb8a04a1f3fff1fa07e998e86f7f7a27ae3||||true
+412c8df6-12d4-4f18-a825-cb4e7e12f703|Enfermeira Joana|j@j.com|joana|enfermagem|a665a45920422f9d417e4867efdc4fb8a04a1f3fff1fa07e998e86f7f7a27ae3||||true
+7c58a169-5d23-4739-b4e1-1247683ee4bb|Dr. House|h@h.com|house|médico|a665a45920422f9d417e4867efdc4fb8a04a1f3fff1fa07e998e86f7f7a27ae3||1234|Geral|true
+ce7caaeb-4b5b-4b1a-a5aa-07854caf1f63|Farmaceutico Bob|b@b.com|bob|farmácia|a665a45920422f9d417e4867efdc4fb8a04a1f3fff1fa07e998e86f7f7a27ae3||||true
+fe7bf320-afe6-4735-b5f3-3bc52892495a|alexandrec|alex@gmail.com|alexandrec|recepção|4135aa9dc1b842a653dea846903ddb95bfb8c5a10c504a7fa16e10bc31d1fdf0||||true
+3c5357a3-79f6-46c4-8c5d-bf75179b8606|Alexandre (Recepção)|alex@hospital.com|alex|recepção|a665a45920422f9d417e4867efdc4fb8a04a1f3fff1fa07e998e86f7f7a27ae3||||true
+98cdcace-7eab-4cae-aa99-2e17887a74e0|Dr. House|house@hospital.com|house|médico|a665a45920422f9d417e4867efdc4fb8a04a1f3fff1fa07e998e86f7f7a27ae3||12345|Infectologista|true
+0acdf608-0fd9-47d9-9c10-9869f389687b|Dra. Grey|grey@hospital.com|grey|médico|a665a45920422f9d417e4867efdc4fb8a04a1f3fff1fa07e998e86f7f7a27ae3||54321|Cirurgia Geral|true
+00f451e5-ac59-4a98-bff7-5e91eccc0419|Dr. Estranho|strange@hospital.com|strange|médico|a665a45920422f9d417e4867efdc4fb8a04a1f3fff1fa07e998e86f7f7a27ae3||99999|Neurocirurgia|true
+52bf6c79-786d-47f8-9e26-01ec054f1f59|Enf. Joy|joy@hospital.com|joy|enfermagem|a665a45920422f9d417e4867efdc4fb8a04a1f3fff1fa07e998e86f7f7a27ae3||||true
+e53d991a-a9b7-4d92-b256-7102b3918e2d|Farm. Walter|walter@hospital.com|walter|farmácia|a665a45920422f9d417e4867efdc4fb8a04a1f3fff1fa07e998e86f7f7a27ae3||||true
