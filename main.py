@@ -32,7 +32,7 @@ def exibir_menu_principal():
     print("-" * 50)
     return input(">>> Escolha uma opção: ")
 
-# --- SUB-MENU DE GERENCIAMENTO DE TAREFAS (NOVO) ---
+# --- SUB-MENU DE GERENCIAMENTO DE TAREFAS ---
 def fluxo_gerenciar_tarefas():
     """Menu CRUD de Tarefas."""
     while True:
@@ -68,8 +68,7 @@ def fluxo_gerenciar_tarefas():
             print("Opção inválida.")
             aguardar()
 
-# --- MENUS POR SETOR (ATUALIZADOS) ---
-# Agora a opção "Listar Todas as Tarefas" chama o novo fluxo de gerenciamento
+# --- MENUS POR SETOR ---
 
 def exibir_menu_recepcao():
     limpar_tela()
@@ -80,7 +79,7 @@ def exibir_menu_recepcao():
     print("2. Listar Pacientes em Atendimento")
     print("3. Visualizar Fila de Espera")
     print("4. Relatórios")
-    print("5. Gerenciar Tarefas (Criar/Editar/Excluir)") # Opção Nova
+    print("5. Gerenciar Tarefas (Criar/Editar/Excluir)")
     print("0. Logout")
     return input(">>> Opção: ")
 
@@ -93,7 +92,7 @@ def exibir_menu_enfermagem():
     print("2. Realizar Triagem")
     print("3. Administrar Medicamento")
     print("4. Verificar Paciente Pós-Atendimento")
-    print("5. Gerenciar Tarefas (Criar/Editar/Excluir)") # Atualizado
+    print("5. Gerenciar Tarefas (Criar/Editar/Excluir)")
     print("7. Relatórios")
     print("0. Logout")
     return input(">>> Opção: ")
@@ -108,7 +107,7 @@ def exibir_menu_medico():
     print("3. Solicitar Exames/Procedimentos")
     print("4. Ver Pacientes para Alta")
     print("5. Dar Alta ao Paciente")
-    print("6. Gerenciar Tarefas (Criar/Editar/Excluir)") # Atualizado
+    print("6. Gerenciar Tarefas (Criar/Editar/Excluir)")
     print("8. Relatórios")
     print("0. Logout")
     return input(">>> Opção: ")
@@ -120,10 +119,54 @@ def exibir_menu_farmacia():
     print("="*50)
     print("1. Ver Receitas Pendentes")
     print("2. Dispensar Medicamento")
-    print("3. Gerenciar Tarefas (Criar/Editar/Excluir)") # Atualizado
+    print("3. Gerenciar Tarefas (Criar/Editar/Excluir)")
     print("5. Relatórios")
     print("0. Logout")
     return input(">>> Opção: ")
+
+# --- FUNÇÕES DE REGISTRO DE PACIENTE (RESTAURADAS) ---
+
+def fluxo_registrar_paciente():
+    """Registra um novo paciente e inicia o workflow."""
+    print("\n--- REGISTRAR NOVO PACIENTE ---")
+    
+    nome_paciente = input("Nome do Paciente: ").strip()
+    if not nome_paciente:
+        print("Erro: O nome não pode ficar em branco.")
+        return
+    
+    cpf = input("CPF: ").strip()
+    data_nascimento = input("Data de Nascimento (dd/mm/yyyy): ").strip()
+    telefone = input("Telefone: ").strip()
+    
+    print("\nTipo de Atendimento:")
+    print("1. Emergência")
+    print("2. Consulta Eletiva")
+    print("3. Retorno")
+    tipo_atendimento = input("Escolha: ").strip()
+    
+    tipos = {"1": "Emergência", "2": "Consulta Eletiva", "3": "Retorno"}
+    tipo_str = tipos.get(tipo_atendimento, "Consulta Eletiva")
+    
+    queixa = input("Queixa Principal: ").strip()
+    
+    try:
+        # Cria o paciente (tarefa raiz)
+        paciente_id = tarefas.criar_paciente(
+            usuario_logado,
+            nome_paciente,
+            cpf,
+            data_nascimento,
+            telefone,
+            tipo_str,
+            queixa
+        )
+        print(f"\n✓ Paciente {nome_paciente} registrado com sucesso!")
+        print(f"✓ Workflow iniciado (Triagem -> Médico -> etc).")
+    except Exception as e:
+        print(f"Erro ao registrar paciente: {e}")
+    
+    aguardar(2)
 
 # --- FLUXOS DE AUTENTICAÇÃO ---
 def fluxo_login():
@@ -152,23 +195,36 @@ def processar_menu_recepcao():
     global usuario_logado
     while usuario_logado:
         op = exibir_menu_recepcao()
+        
         if op == '1': 
-            # Simula fluxo de registro (chamando função do tarefas se existir ou print)
-            print("Fluxo de registro...")
+            fluxo_registrar_paciente()  # <--- CORREÇÃO: Chamando a função real
+        elif op == '2': 
+            tarefas.listar_pacientes_geral()
+            input("Voltar...")
+        elif op == '3': 
+            tarefas.exibir_fila_por_setor()
+            input("Voltar...")
+        elif op == '4': 
+            fluxo_relatorios()
+        elif op == '5': 
+            fluxo_gerenciar_tarefas()
+        elif op == '0': 
+            usuario_logado = None
+        else: 
+            print("Opção inválida!")
             aguardar()
-        elif op == '2': tarefas.listar_pacientes_geral(); input("Voltar...")
-        elif op == '3': tarefas.exibir_fila_por_setor(); input("Voltar...")
-        elif op == '4': fluxo_relatorios()
-        elif op == '5': fluxo_gerenciar_tarefas() # Chama o novo menu CRUD
-        elif op == '0': usuario_logado = None
-        else: print("Opção inválida!"); aguardar()
 
 def processar_menu_enfermagem():
     global usuario_logado
     while usuario_logado:
         op = exibir_menu_enfermagem()
-        if op == '1': pass # (Implementar chamadas originais aqui se precisar)
-        elif op == '5': fluxo_gerenciar_tarefas() # Chama o novo menu CRUD
+        if op == '1': 
+            print("Use o menu de 'Realizar Triagem' para ver a fila.") # Simulação
+            aguardar()
+        elif op == '2': tarefas.realizar_triagem(usuario_logado); aguardar()
+        elif op == '3': tarefas.administrar_medicamento(usuario_logado); aguardar()
+        elif op == '4': tarefas.verificar_paciente(usuario_logado); aguardar()
+        elif op == '5': fluxo_gerenciar_tarefas()
         elif op == '7': fluxo_relatorios()
         elif op == '0': usuario_logado = None
         else: print("Opção inválida!"); aguardar()
@@ -177,7 +233,16 @@ def processar_menu_medico():
     global usuario_logado
     while usuario_logado:
         op = exibir_menu_medico()
-        if op == '6': fluxo_gerenciar_tarefas() # Chama o novo menu CRUD
+        if op == '1': 
+            print("Use 'Realizar Atendimento' para ver a fila.") # Simulação
+            aguardar()
+        elif op == '2': tarefas.realizar_atendimento_medico(usuario_logado); aguardar()
+        elif op == '3': tarefas.solicitar_exames(usuario_logado); aguardar()
+        elif op == '4': 
+            print("Use 'Dar Alta' para ver a fila.")
+            aguardar()
+        elif op == '5': tarefas.dar_alta_paciente(usuario_logado); aguardar()
+        elif op == '6': fluxo_gerenciar_tarefas()
         elif op == '8': fluxo_relatorios()
         elif op == '0': usuario_logado = None
         else: print("Opção inválida!"); aguardar()
@@ -186,7 +251,11 @@ def processar_menu_farmacia():
     global usuario_logado
     while usuario_logado:
         op = exibir_menu_farmacia()
-        if op == '3': fluxo_gerenciar_tarefas() # Chama o novo menu CRUD
+        if op == '1': 
+            print("Use 'Dispensar Medicamento' para ver a fila.")
+            aguardar()
+        elif op == '2': tarefas.dispensar_medicamento(usuario_logado); aguardar()
+        elif op == '3': fluxo_gerenciar_tarefas()
         elif op == '5': fluxo_relatorios()
         elif op == '0': usuario_logado = None
         else: print("Opção inválida!"); aguardar()

@@ -69,7 +69,7 @@ def gerar_relatorio_concluidos(usuario_filtro=None):
         if not confirmacao_concluida(tarefa):
             continue
 
-        # FILTRO: Se não for Recepção, só vê as suas ou do seu setor
+        # FILTRO
         if usuario_filtro and not ver_tudo:
             eh_responsavel = tarefa.get('responsavel') == usuario_filtro['id']
             eh_concluido_por = tarefa.get('concluida_por') == usuario_filtro['id']
@@ -180,7 +180,7 @@ def gerar_relatorio_produtividade(usuario_filtro=None):
             
             # Se não tem 'concluida_por', tenta 'responsavel' (mas cuidado com 'sistema')
             if not resp_id or resp_id == 'sistema':
-                continue # Tarefas do sistema não contam para ranking de usuários
+                continue 
 
             nome = mapa_nomes.get(resp_id, "Usuário Removido")
             
@@ -203,7 +203,7 @@ def gerar_relatorio_produtividade(usuario_filtro=None):
     print("-" * 60)
     print(f"Total de entregas manuais: {total_geral}")
 
-# RELATÓRIO 4: EXPORTAR PARA TXT
+# RELATÓRIO 4: EXPORTAR PARA TXT (CORRIGIDO)
 def exportar_relatorio_txt(usuario_logado):
     imprimir_cabecalho("EXPORTAR RELATÓRIO")
     
@@ -216,12 +216,35 @@ def exportar_relatorio_txt(usuario_logado):
             f.write(f"Gerado por: {usuario_logado['nome']} em {datetime.datetime.now()}\n")
             f.write("="*50 + "\n\n")
             
+            # Filtra se não for recepção/admin
+            ver_tudo = pode_ver_tudo(usuario_logado)
+            
+            count = 0
             for t in lista_alvo:
+                if not ver_tudo:
+                    eh_resp = t.get('responsavel') == usuario_logado['id']
+                    eh_setor = str(t.get('setor')).lower() == str(usuario_logado['setor']).lower()
+                    if not (eh_resp or eh_setor):
+                        continue
+                
+                count += 1
                 f.write(f"[{t['status']}] {t['titulo']}\n")
-                f.write(f"Setor: {t.get('setor')} | Responsável: {t.get('responsavel')}\n")
-                f.write(f"Concluída por: {buscar_nome_usuario(t.get('concluida_por'))}\n")
-                f.write("-" * 20 + "\n")
+                f.write(f"Descrição: {t.get('descricao', 'Sem descrição')}\n")  # <--- ADICIONADO AQUI
+                f.write(f"Setor: {t.get('setor')} | Prazo: {t.get('prazo')}\n")
+                
+                quem_fez = buscar_nome_usuario(t.get('concluida_por'))
+                if t['status'] == 'Concluída':
+                    f.write(f"Concluída por: {quem_fez} em {t.get('data_conclusao')}\n")
+                
+                f.write("-" * 30 + "\n")
+            
+            if count == 0:
+                f.write("Nenhuma tarefa encontrada para exportar.\n")
         
         print(f"Arquivo exportado com sucesso: {nome_arquivo}")
+        # Abre o arquivo automaticamente no Windows (opcional)
+        if os.name == 'nt':
+            os.system(f"start {nome_arquivo}")
+            
     except Exception as e:
         print(f"Erro ao exportar arquivo: {e}")

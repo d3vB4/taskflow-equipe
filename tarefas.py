@@ -1,7 +1,7 @@
 from uuid import uuid4
 from datetime import datetime, timedelta
 import os
-import ast  # Para converter strings de dicionários de volta para dict
+import ast
 import usuarios 
 
 # --- CONFIGURAÇÕES E CONSTANTES ---
@@ -12,7 +12,6 @@ STATUS_PENDENTE = "Pendente"
 STATUS_CONCLUIDA = "Concluída"
 STATUS_CANCELADA = "Cancelada"
 
-# Definição das colunas (Incluindo atendimento_token para o Web funcionar)
 COLUNAS_TAREFAS = [
     'id', 'paciente_id', 'paciente_nome', 'titulo', 'descricao',
     'tipo_tarefa', 'setor', 'responsavel', 'prazo', 'prioridade',
@@ -74,15 +73,23 @@ def _carregar_tarefas() -> list:
         return []
     return lista_tarefas
 
+# --- PERSISTÊNCIA DE PACIENTES (Simples) ---
 def _carregar_pacientes() -> list:
-    # Simulação simples para evitar dependência circular se utils não existir
-    if not os.path.exists(ARQUIVO_PACIENTES): return []
-    # Lógica simplificada
-    return [] 
+    # Tenta usar o utils se existir, senão usa lógica local simples
+    try:
+        import utils.arquivos as arq
+        return arq.carregar_dados(ARQUIVO_PACIENTES)
+    except ImportError:
+        if not os.path.exists(ARQUIVO_PACIENTES): return []
+        # (Implementação simplificada de leitura se necessário)
+        return [] 
 
 def _salvar_pacientes(pacientes: list) -> bool:
-    # Lógica simplificada
-    return True
+    try:
+        import utils.arquivos as arq
+        return arq.salvar_dados(pacientes, ARQUIVO_PACIENTES)
+    except:
+        return True
 
 def _data_atual():
     return datetime.now().strftime("%d/%m/%Y")
@@ -96,126 +103,79 @@ def _buscar_tarefa_por_id(id_tarefa: str, tarefas: list = None):
         if t['id'] == id_tarefa: return t
     return None
 
-# --- CRUD MANUAL DE TAREFAS (NOVO) ---
+# --- CRUD MANUAL DE TAREFAS ---
 
 def criar_tarefa_manual(usuario_logado: dict):
-    """Cria uma tarefa avulsa manualmente."""
-    print("\n--- NOVA TAREFA ---")
+    print("\n--- NOVA TAREFA MANUAL ---")
     titulo = input("Título: ").strip()
-    if not titulo:
-        print("Erro: Título é obrigatório.")
-        return
-
+    if not titulo: return
     descricao = input("Descrição: ").strip()
     prazo = input("Prazo (dd/mm/yyyy): ").strip()
     
-    print("Prioridade: 1. Normal | 2. Alta | 3. Urgente")
-    prio_op = input("Escolha: ").strip()
-    prioridade = {"1": "Normal", "2": "Alta", "3": "Urgente"}.get(prio_op, "Normal")
-
     nova_tarefa = {
         "id": str(uuid4()),
         "titulo": titulo,
         "descricao": descricao,
         "tipo_tarefa": "Manual",
         "setor": usuario_logado['setor'],
-        "responsavel": usuario_logado['id'], # Atribui a si mesmo
+        "responsavel": usuario_logado['id'],
         "prazo": prazo,
-        "prioridade": prioridade,
+        "prioridade": "Normal",
         "status": STATUS_PENDENTE,
         "data_criacao": _data_atual(),
-        "paciente_nome": "Tarefa Interna"
+        "paciente_nome": "Interno"
     }
-
     tarefas = _carregar_tarefas()
     tarefas.append(nova_tarefa)
-    
-    if _salvar_tarefas(tarefas):
-        print("✓ Tarefa criada com sucesso!")
-    else:
-        print("Erro ao salvar tarefa.")
+    _salvar_tarefas(tarefas)
+    print("✓ Tarefa criada.")
 
 def editar_tarefa(usuario_logado: dict):
-    """Edita uma tarefa existente do setor."""
     tarefas = _carregar_tarefas()
     setor = str(usuario_logado['setor']).lower()
-    
-    # Lista tarefas do setor que podem ser editadas
     meus_itens = [t for t in tarefas if str(t.get('setor')).lower() == setor]
     
     if not meus_itens:
-        print("Nenhuma tarefa encontrada para editar.")
+        print("Nada para editar.")
         return
 
-    print("\n--- EDITAR TAREFA ---")
     for i, t in enumerate(meus_itens, 1):
-        print(f"{i}. {t['titulo']} ({t['status']})")
+        print(f"{i}. {t['titulo']}")
     
     try:
-        idx = int(input("\nNúmero da tarefa (0 cancela): ")) - 1
+        idx = int(input("Número: ")) - 1
         if idx < 0: return
         alvo = meus_itens[idx]
-    except:
-        print("Opção inválida.")
-        return
-
-    print(f"\nEditando: {alvo['titulo']}")
-    print("(Deixe em branco para manter o valor atual)")
-    
-    novo_titulo = input(f"Título [{alvo['titulo']}]: ").strip()
-    if novo_titulo: alvo['titulo'] = novo_titulo
-    
-    novo_desc = input(f"Descrição [{alvo.get('descricao', '')}]: ").strip()
-    if novo_desc: alvo['descricao'] = novo_desc
-    
-    novo_prazo = input(f"Prazo [{alvo.get('prazo', '')}]: ").strip()
-    if novo_prazo: alvo['prazo'] = novo_prazo
-
-    if _salvar_tarefas(tarefas):
-        print("✓ Tarefa atualizada!")
+        novo_titulo = input(f"Título [{alvo['titulo']}]: ")
+        if novo_titulo: alvo['titulo'] = novo_titulo
+        _salvar_tarefas(tarefas)
+        print("✓ Editado.")
+    except: pass
 
 def excluir_tarefa(usuario_logado: dict):
-    """Exclui uma tarefa do setor."""
     tarefas = _carregar_tarefas()
     setor = str(usuario_logado['setor']).lower()
-    
-    # Lista tarefas do setor
     meus_itens = [t for t in tarefas if str(t.get('setor')).lower() == setor]
     
-    if not meus_itens:
-        print("Nenhuma tarefa disponível para excluir.")
-        return
-
-    print("\n--- EXCLUIR TAREFA ---")
     for i, t in enumerate(meus_itens, 1):
-        print(f"{i}. {t['titulo']} ({t['status']})")
-    
-    try:
-        idx = int(input("\nNúmero da tarefa para EXCLUIR (0 cancela): ")) - 1
-        if idx < 0: return
-        tarefa_para_excluir = meus_itens[idx]
-    except:
-        print("Opção inválida.")
-        return
-
-    confirmar = input(f"Tem certeza que deseja excluir '{tarefa_para_excluir['titulo']}'? (s/n): ")
-    if confirmar.lower() == 's':
-        # Remove da lista principal procurando pelo ID
-        tarefas = [t for t in tarefas if t['id'] != tarefa_para_excluir['id']]
+        print(f"{i}. {t['titulo']}")
         
-        if _salvar_tarefas(tarefas):
-            print("✓ Tarefa excluída.")
-    else:
-        print("Operação cancelada.")
+    try:
+        idx = int(input("Número para excluir: ")) - 1
+        if idx < 0: return
+        alvo = meus_itens[idx]
+        tarefas = [t for t in tarefas if t['id'] != alvo['id']]
+        _salvar_tarefas(tarefas)
+        print("✓ Excluído.")
+    except: pass
 
-# --- FLUXO AUTOMÁTICO (MANTIDO) ---
+# --- FLUXO AUTOMÁTICO ---
 
 def criar_paciente(usuario_logado: dict, nome: str, cpf: str, 
                    data_nascimento: str, telefone: str, 
                    tipo_atendimento: str, queixa: str) -> str:
     paciente_id = str(uuid4())
-    # (Lógica de salvar paciente simplificada para focar nas tarefas)
-    
+    # Aqui chamaria o salvamento de pacientes se necessário
     _criar_fluxo_atendimento(paciente_id, nome, tipo_atendimento, usuario_logado)
     return paciente_id
 
@@ -223,101 +183,52 @@ def _criar_fluxo_atendimento(paciente_id: str, nome_paciente: str,
                              tipo_atendimento: str, usuario_criador: dict):
     tarefas = _carregar_tarefas()
     hoje = _data_atual()
-    prazo_padrao = hoje
     
-    t_triagem = {
-        "id": str(uuid4()), "paciente_id": paciente_id, "paciente_nome": nome_paciente,
-        "titulo": f"Triagem - {nome_paciente}",
-        "descricao": f"Triagem inicial. Tipo: {tipo_atendimento}",
-        "tipo_tarefa": "Triagem", "setor": "enfermagem",
-        "responsavel": "sistema", "prazo": hoje,
-        "prioridade": "Alta" if tipo_atendimento == "Emergência" else "Normal",
-        "status": STATUS_PENDENTE, "data_criacao": hoje
-    }
-    tarefas.append(t_triagem)
+    # Cria as tarefas encadeadas
+    t1 = {"id": str(uuid4()), "paciente_id": paciente_id, "paciente_nome": nome_paciente,
+          "titulo": f"Triagem - {nome_paciente}", "descricao": "Realizar triagem.",
+          "tipo_tarefa": "Triagem", "setor": "enfermagem", "responsavel": "sistema",
+          "prazo": hoje, "prioridade": "Normal", "status": STATUS_PENDENTE, "data_criacao": hoje}
     
-    t_consulta = {
-        "id": str(uuid4()), "paciente_id": paciente_id, "paciente_nome": nome_paciente,
-        "titulo": f"Consulta Médica - {nome_paciente}",
-        "descricao": "Realizar atendimento médico. Aguardando triagem.",
-        "tipo_tarefa": "Consulta Médica", "setor": "médico",
-        "responsavel": "sistema", "prazo": prazo_padrao,
-        "prioridade": "Normal", "status": STATUS_PENDENTE,
-        "dependencia": t_triagem['id'], "data_criacao": hoje
-    }
-    tarefas.append(t_consulta)
-    
-    t_farmacia = {
-        "id": str(uuid4()), "paciente_id": paciente_id, "paciente_nome": nome_paciente,
-        "titulo": f"Dispensação - {nome_paciente}",
-        "descricao": "Dispensar medicamentos. Aguardando prescrição.",
-        "tipo_tarefa": "Dispensação de Medicamento", "setor": "farmácia",
-        "responsavel": "sistema", "prazo": prazo_padrao,
-        "prioridade": "Normal", "status": "Aguardando Prescrição",
-        "dependencia": t_consulta['id'], "data_criacao": hoje
-    }
-    tarefas.append(t_farmacia)
-    
-    t_admin = {
-        "id": str(uuid4()), "paciente_id": paciente_id, "paciente_nome": nome_paciente,
-        "titulo": f"Administrar Medicação - {nome_paciente}",
-        "descricao": "Administrar medicamentos dispensados.",
-        "tipo_tarefa": "Administração de Medicamento", "setor": "enfermagem",
-        "responsavel": "sistema", "prazo": prazo_padrao,
-        "prioridade": "Normal", "status": "Aguardando Medicamento",
-        "dependencia": t_farmacia['id'], "data_criacao": hoje
-    }
-    tarefas.append(t_admin)
-    
-    t_verif = {
-        "id": str(uuid4()), "paciente_id": paciente_id, "paciente_nome": nome_paciente,
-        "titulo": f"Verificação Pós-Atendimento - {nome_paciente}",
-        "descricao": "Verificar sinais vitais após atendimento.",
-        "tipo_tarefa": "Verificação de Sinais", "setor": "enfermagem",
-        "responsavel": "sistema", "prazo": prazo_padrao,
-        "prioridade": "Normal", "status": STATUS_PENDENTE,
-        "dependencia": t_consulta['id'], "data_criacao": hoje
-    }
-    tarefas.append(t_verif)
-    
-    t_alta = {
-        "id": str(uuid4()), "paciente_id": paciente_id, "paciente_nome": nome_paciente,
-        "titulo": f"Alta Médica - {nome_paciente}",
-        "descricao": "Avaliar condições e liberar paciente.",
-        "tipo_tarefa": "Alta Médica", "setor": "médico",
-        "responsavel": "sistema", "prazo": prazo_padrao,
-        "prioridade": "Normal", "status": "Aguardando Verificação",
-        "dependencia": t_verif['id'], "data_criacao": hoje
-    }
-    tarefas.append(t_alta)
-    
+    t2 = {"id": str(uuid4()), "paciente_id": paciente_id, "paciente_nome": nome_paciente,
+          "titulo": f"Consulta - {nome_paciente}", "descricao": "Atendimento médico.",
+          "tipo_tarefa": "Consulta Médica", "setor": "médico", "responsavel": "sistema",
+          "prazo": hoje, "prioridade": "Normal", "status": STATUS_PENDENTE, 
+          "dependencia": t1['id'], "data_criacao": hoje}
+          
+    tarefas.extend([t1, t2])
     _salvar_tarefas(tarefas)
 
-# --- FUNÇÕES DE LISTAGEM E AÇÃO ---
+# --- FUNÇÕES DE LISTAGEM E VISUALIZAÇÃO (REIMPLEMENTADAS) ---
 
 def listar_tarefas_por_setor(usuario_logado):
+    """Lista tarefas específicas do setor do usuário logado."""
     tarefas = _carregar_tarefas()
     setor_user = str(usuario_logado['setor']).lower()
     
-    print(f"\nTAREFAS DO SETOR: {setor_user.upper()}")
+    print(f"\n--- TAREFAS: {setor_user.upper()} ---")
     encontrou = False
     for t in tarefas:
         if str(t.get('setor')).lower() == setor_user:
             encontrou = True
-            resp = "Mim" if t.get('responsavel') == usuario_logado['id'] else "Equipe/Sistema"
-            print(f"- [{t['status']}] {t['titulo']} (Resp: {resp})")
-    
+            status = t.get('status')
+            print(f"[{status}] {t['titulo']}")
+            print(f"   Desc: {t.get('descricao')}")
+            print("-" * 40)
+            
     if not encontrou:
         print(" Nenhuma tarefa encontrada.")
 
 def concluir_tarefa_setor(usuario_logado):
+    """Marca uma tarefa como concluída."""
     tarefas = _carregar_tarefas()
     setor_user = str(usuario_logado['setor']).lower()
     
+    # Filtra pendentes do setor
     pendentes = [t for t in tarefas if str(t.get('setor')).lower() == setor_user and t['status'] == STATUS_PENDENTE]
     
     if not pendentes:
-        print("Nada pendente.")
+        print("Nada pendente para concluir.")
         return
 
     for i, t in enumerate(pendentes, 1):
@@ -332,35 +243,92 @@ def concluir_tarefa_setor(usuario_logado):
         selecionada['data_conclusao'] = _data_atual()
         selecionada['concluida_por'] = usuario_logado['id']
         _salvar_tarefas(tarefas)
-        print("Concluída.")
-    except:
-        print("Erro.")
-
-# --- MANTENDO FUNÇÕES ESPECÍFICAS DO HOSPITAL (Para não quebrar o CLI antigo) ---
-def realizar_triagem(usuario_logado):
-    # Lógica simplificada para CRUD (ou reimplementar se necessário)
-    concluir_tarefa_setor(usuario_logado)
-
-def realizar_atendimento_medico(usuario_logado):
-    concluir_tarefa_setor(usuario_logado)
-
-def dispensar_medicamento(usuario_logado):
-    concluir_tarefa_setor(usuario_logado)
-
-def administrar_medicamento(usuario_logado):
-    concluir_tarefa_setor(usuario_logado)
-
-def verificar_paciente(usuario_logado):
-    concluir_tarefa_setor(usuario_logado)
-
-def dar_alta_paciente(usuario_logado):
-    concluir_tarefa_setor(usuario_logado)
-
-def listar_pacientes_geral():
-    print("Listagem de pacientes...")
+        print("✓ Tarefa concluída!")
+    except: pass
 
 def exibir_fila_por_setor():
-    print("Exibindo fila...")
+    """
+    Mostra um painel geral de todas as filas do hospital.
+    Ideal para ver onde os pacientes estão parados.
+    """
+    tarefas = _carregar_tarefas()
+    
+    # Define a ordem lógica do fluxo hospitalar
+    setores_ordem = ['recepção', 'enfermagem', 'médico', 'farmácia']
+    
+    print("\n" + "="*60)
+    print(f"{'FILA DE ESPERA GERAL':^60}")
+    print("="*60)
+    
+    total_geral = 0
+    
+    for setor in setores_ordem:
+        # Filtra tarefas pendentes deste setor
+        fila_setor = [
+            t for t in tarefas 
+            if str(t.get('setor')).lower() == setor 
+            and t.get('status') == STATUS_PENDENTE
+        ]
+        
+        print(f"\n=== {setor.upper()} ({len(fila_setor)}) ===")
+        if not fila_setor:
+            print("  (Fila vazia)")
+        else:
+            for t in fila_setor:
+                # Mostra detalhes importantes (Paciente e Título da Tarefa)
+                nome_pac = t.get('paciente_nome', 'Desconhecido')
+                titulo = t.get('titulo', 'Sem título')
+                prio = "🚨" if t.get('prioridade') == 'Alta' else "•"
+                print(f"  {prio} {nome_pac} -> {titulo}")
+        
+        total_geral += len(fila_setor)
+        
+    print("-" * 60)
+    print(f"Total de pacientes em espera no hospital: {total_geral}")
+    print("-" * 60)
 
-def listar_tarefas_por_status(u, s, tipo_tarefa=None):
-    listar_tarefas_por_setor(u)
+def listar_pacientes_geral():
+    """
+    Lista todos os pacientes que têm tarefas ativas no sistema.
+    Isso substitui a necessidade de ler o arquivo 'pacientes.txt' se ele estiver com problemas.
+    """
+    tarefas = _carregar_tarefas()
+    
+    # Coleta pacientes únicos baseados nas tarefas
+    pacientes_ativos = {}
+    
+    for t in tarefas:
+        pid = t.get('paciente_id')
+        if pid and pid not in pacientes_ativos:
+            pacientes_ativos[pid] = {
+                'nome': t.get('paciente_nome'),
+                'tarefas': []
+            }
+        
+        if pid:
+            pacientes_ativos[pid]['tarefas'].append(f"{t['titulo']} ({t['status']})")
+            
+    print("\n" + "="*60)
+    print(f"{'PACIENTES EM ATENDIMENTO':^60}")
+    print("="*60)
+    
+    if not pacientes_ativos:
+        print("Nenhum paciente encontrado.")
+    
+    for pid, dados in pacientes_ativos.items():
+        print(f"👤 {dados['nome']}")
+        # Mostra as últimas 2 tarefas para dar contexto
+        ultimas = dados['tarefas'][-2:]
+        for task in ultimas:
+            print(f"   └─ {task}")
+        print("-" * 60)
+
+# Funções placeholders para manter compatibilidade com chamadas antigas do main.py
+# (Caso o main.py tente chamar funções específicas de setor que foram generalizadas)
+def realizar_triagem(u): concluir_tarefa_setor(u)
+def realizar_atendimento_medico(u): concluir_tarefa_setor(u)
+def dispensar_medicamento(u): concluir_tarefa_setor(u)
+def administrar_medicamento(u): concluir_tarefa_setor(u)
+def verificar_paciente(u): concluir_tarefa_setor(u)
+def dar_alta_paciente(u): concluir_tarefa_setor(u)
+def solicitar_exames(u): print("Funcionalidade em breve.")
