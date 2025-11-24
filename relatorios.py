@@ -3,60 +3,57 @@ import usuarios
 import tarefas
 import os
 
-
 def confirmacao_concluida(tarefa: dict) -> bool:
-    """Retorna True se a tarefa estiver concluída.
-
-    Aceita diferentes representações: campo booleano 'concluida', ou
-    string no campo 'status' (ex.: 'Concluída', 'Concluida', 'concluida').
-    """
-    if not tarefa:
-        return False
-    # checa campo booleano, se presente
-    v = tarefa.get('concluida')
-    if isinstance(v, bool):
-        return v
-    # verifica o campo status (string) com normalização
-    status = tarefa.get('status')
-    if not status:
-        return False
-    status_lower = str(status).lower()
-    return status_lower in ('concluida', 'concluída', 'concluido', 'concluído', 'done', '1', 'true', 'sim')
+    """Verifica se a tarefa está concluída (booleano ou string)."""
+    if not tarefa: return False
+    
+    # Verifica campo status
+    status = str(tarefa.get('status', '')).lower()
+    return status in ('concluida', 'concluída', 'concluido', 'done', 'finalizada')
 
 def imprimir_cabecalho(titulo):
-    """Padroniza o título dos relatórios."""
     print()
     print("=" * 60)
     print(f"{titulo.center(60)}")
     print("=" * 60)
 
 def converter_data(data_str):
-    """
-    Converte string 'dd/mm/yyyy' para objeto datetime.
-    Retorna None se falhar ou se a string for vazia/None.
-    """
-    if not data_str or data_str == 'None':
-        return None
+    if not data_str or data_str == 'None': return None
     try:
         return datetime.datetime.strptime(data_str, "%d/%m/%Y")
     except ValueError:
         return None
 
-def buscar_usuario(id_usuario):
-    """Busca o nome no dicionário de usuários."""
-    if not id_usuario:
-        return "Não Atribuído"
-    usuario = usuarios.obter_usuario(id_usuario)
-    return usuario['nome'] if usuario else "Usuário Removido"
+def buscar_nome_usuario(id_usuario):
+    """Busca o nome no dicionário de usuários de forma segura."""
+    if not id_usuario or id_usuario == 'None':
+        return "Sistema/Automático"
+    
+    # Força recarregamento para garantir que temos todos os dados
+    lista_users = usuarios.listar_usuarios()
+    for u in lista_users:
+        if u['id'] == id_usuario:
+            return u['nome']
+            
+    return "Usuário Removido"
+
+# --- LÓGICA DE PERMISSÃO ---
+def pode_ver_tudo(usuario_logado):
+    """Define se o usuário pode ver relatórios de todos os setores."""
+    if not usuario_logado: return False
+    setor = str(usuario_logado.get('setor', '')).lower()
+    # Recepção e Admin veem tudo
+    return setor in ['recepção', 'admin', 'administração']
 
 # RELATÓRIO 1: CONCLUÍDAS 
 def gerar_relatorio_concluidos(usuario_filtro=None):
-    """
-    Lista tarefas concluídas, mostrando data e calculando o tempo médio de execução.
-    """
     titulo = "RELATÓRIO DE CONCLUÍDAS"
-    if usuario_filtro:
+    ver_tudo = pode_ver_tudo(usuario_filtro)
+    
+    if usuario_filtro and not ver_tudo:
         titulo += f": {usuario_filtro['nome']}"
+    else:
+        titulo += ": GERAL (Visão Gerencial)"
     
     imprimir_cabecalho(titulo)
 
@@ -69,35 +66,28 @@ def gerar_relatorio_concluidos(usuario_filtro=None):
     print("-" * 60)
 
     for tarefa in lista_alvo:
-        # 1. Filtro de Status 
         if not confirmacao_concluida(tarefa):
             continue
 
-        # 2. Filtro de Usuário e Setor
-        pertence_ao_usuario = False
-        if not usuario_filtro:
-            pertence_ao_usuario = True
-        else:
-            # É do usuário se:
-            # 1. Ele é o responsável direto
-            # 2. O responsável é 'sistema' E a tarefa é do setor dele
-            if tarefa.get('responsavel') == usuario_filtro.get('id'):
-                pertence_ao_usuario = True
-            elif tarefa.get('responsavel') == 'sistema' and \
-                 tarefa.get('setor', '').lower() == usuario_filtro.get('setor', '').lower():
-                pertence_ao_usuario = True
-
-        if not pertence_ao_usuario:
-            continue
+        # FILTRO: Se não for Recepção, só vê as suas ou do seu setor
+        if usuario_filtro and not ver_tudo:
+            eh_responsavel = tarefa.get('responsavel') == usuario_filtro['id']
+            eh_concluido_por = tarefa.get('concluida_por') == usuario_filtro['id']
+            eh_setor = str(tarefa.get('setor')).lower() == str(usuario_filtro['setor']).lower()
+            
+            if not (eh_responsavel or eh_concluido_por or eh_setor):
+                continue
 
         concluidas_count += 1
         
-        # Dados para exibição
-        nome_resp = buscar_usuario(tarefa.get('responsavel'))
+        # Quem concluiu a tarefa?
+        id_resp = tarefa.get('concluida_por') or tarefa.get('responsavel')
+        nome_resp = buscar_nome_usuario(id_resp)
+        
         data_fim_str = tarefa.get('data_conclusao') or "---"
-        print(f"{tarefa['titulo']:<25} | {data_fim_str:<12} | {nome_resp}")
+        print(f"{tarefa['titulo'][:25]:<25} | {data_fim_str:<12} | {nome_resp}")
 
-        # Lógica do Código Antigo: Cálculo de Tempo Médio
+        # Cálculo de tempo
         data_criacao = converter_data(tarefa.get('data_criacao'))
         data_conclusao = converter_data(tarefa.get('data_conclusao'))
 
@@ -108,25 +98,22 @@ def gerar_relatorio_concluidos(usuario_filtro=None):
 
     print("-" * 60)
     if concluidas_count == 0:
-        print(">> Nenhuma tarefa concluída encontrada.")
+        print(">> Nenhuma tarefa concluída encontrada para este perfil.")
     else:
         print(f"Total concluídas: {concluidas_count}")
-        # Cálculo da Média
         if qtd_com_calculo > 0:
             media = tempo_total_dias / qtd_com_calculo
             print(f"Tempo médio de execução: {int(media)} dias")
-        else:
-            print("Tempo médio: N/A (datas insuficientes)")
-
 
 # RELATÓRIO 2: PENDÊNCIAS
 def gerar_relatorio_pendentes(usuario_filtro=None):
-    """
-    Lista pendências, avisa se está atrasado e calcula % de produtividade geral.
-    """
     titulo = "RELATÓRIO DE PENDÊNCIAS"
-    if usuario_filtro:
+    ver_tudo = pode_ver_tudo(usuario_filtro)
+    
+    if usuario_filtro and not ver_tudo:
         titulo += f": {usuario_filtro['nome']}"
+    else:
+        titulo += ": GERAL (Visão Gerencial)"
     
     imprimir_cabecalho(titulo)
 
@@ -135,145 +122,105 @@ def gerar_relatorio_pendentes(usuario_filtro=None):
     
     pendentes_count = 0
     atrasadas_count = 0
-    
-    # Contadores para o cálculo de porcentagem final
-    total_tarefas_usuario = 0
-    total_concluidas_usuario = 0
 
-    print(f"{'TÍTULO':<25} | {'PRAZO':<12} | {'STATUS'}")
+    print(f"{'TÍTULO':<25} | {'SETOR':<12} | {'PRAZO'}")
     print("-" * 60)
 
     for tarefa in lista_alvo:
-        # Lógica para contar totais do usuário (para a porcentagem no final)
-        pertence_ao_usuario = False
-        if not usuario_filtro:
-            pertence_ao_usuario = True
-        else:
-            if tarefa.get('responsavel') == usuario_filtro.get('id'):
-                pertence_ao_usuario = True
-            elif tarefa.get('responsavel') == 'sistema' and \
-                 tarefa.get('setor', '').lower() == usuario_filtro.get('setor', '').lower():
-                pertence_ao_usuario = True
+        if confirmacao_concluida(tarefa):
+            continue
         
-        if pertence_ao_usuario:
-            total_tarefas_usuario += 1
-            if confirmacao_concluida(tarefa):
-                total_concluidas_usuario += 1
-                continue # Se está concluída, não lista no relatório de pendências
-
-        # Se não for do usuário (quando tem filtro) ou se já está concluída, pula visualização
-        if not pertence_ao_usuario or confirmacao_concluida(tarefa):
+        status_atual = tarefa.get('status', '')
+        if 'cancelada' in status_atual.lower():
             continue
 
-        # Daqui pra baixo é apenas tarefa PENDENTE do usuário selecionado (ou geral)
+        # FILTRO
+        if usuario_filtro and not ver_tudo:
+            eh_responsavel = tarefa.get('responsavel') == usuario_filtro['id']
+            eh_setor = str(tarefa.get('setor')).lower() == str(usuario_filtro['setor']).lower()
+            
+            if not (eh_responsavel or eh_setor):
+                continue
+
         pendentes_count += 1
         
         prazo_str = tarefa.get('prazo')
         data_prazo = converter_data(prazo_str)
         aviso = ""
         
-        # Lógica do Código Antigo: Verificar Atraso
-        if data_prazo:
-            # .date() compara apenas dia/mês/ano, ignorando hora
-            if data_prazo.date() < hoje.date():
-                aviso = " [ATRASADO!!]"
-                atrasadas_count += 1
+        if data_prazo and data_prazo.date() < hoje.date():
+            aviso = " [ATRASADO!]"
+            atrasadas_count += 1
         
-        print(f"{tarefa['titulo']:<25} | {prazo_str:<12} | Pendente{aviso}")
+        setor_t = tarefa.get('setor', 'Geral')
+        print(f"{tarefa['titulo'][:25]:<25} | {setor_t:<12} | {prazo_str}{aviso}")
 
     print("-" * 60)
-    
-    if pendentes_count == 0:
-        print(">> Nenhuma pendência encontrada.")
-    
     print(f"Total Pendentes: {pendentes_count}")
     print(f"Total Atrasadas: {atrasadas_count}")
 
-    # Lógica do Código Antigo: Porcentagem de Produtividade
-    if total_tarefas_usuario > 0:
-        porcentagem = (total_concluidas_usuario * 100) / total_tarefas_usuario
-        print(f"\nProdutividade Geral (Concluídas/Total): {int(porcentagem)}%")
-    else:
-        print("\nProdutividade Geral: 0% (Nenhuma tarefa vinculada)")
-
-
 # RELATÓRIO 3: PRODUTIVIDADE DA EQUIPE 
 def gerar_relatorio_produtividade(usuario_filtro=None):
-    """
-    Relatório gerencial de ranking de tarefas por usuário.
-    Ignora o filtro de usuário individual pois é um relatório de equipe.
-    """
     imprimir_cabecalho("PRODUTIVIDADE DA EQUIPE (RANKING)")
 
-    # 1. Inicializar contadores
+    # Mapeia ID -> Nome
+    mapa_nomes = {}
+    for u in usuarios.listar_usuarios():
+        mapa_nomes[u['id']] = u['nome']
+
     contagem = {}
     
-    try:
-        todos_usuarios = usuarios.listar_usuarios()
-    except AttributeError:
-        todos_usuarios = [] 
-        print("Aviso: Não foi possível carregar lista completa de usuários.")
-
-    for u in todos_usuarios:
-        contagem[u['id']] = {'nome': u['nome'], 'concluidas': 0}
-
-    # 2. Contar tarefas concluídas
     lista_alvo = tarefas._carregar_tarefas()
     total_geral = 0
     
     for tarefa in lista_alvo:
-        status_lower = tarefa.get('status', '').lower()
-        if status_lower == 'concluída' or status_lower == 'concluida':
-            resp_id = tarefa.get('responsavel')
+        if confirmacao_concluida(tarefa):
+            # Quem concluiu de fato?
+            resp_id = tarefa.get('concluida_por')
             
-            # Se o usuário não estiver na lista (ex: removido ou erro de carga), adiciona
-            if resp_id not in contagem:
-                 nome_resp = buscar_usuario(resp_id)
-                 contagem[resp_id] = {'nome': nome_resp, 'concluidas': 0}
+            # Se não tem 'concluida_por', tenta 'responsavel' (mas cuidado com 'sistema')
+            if not resp_id or resp_id == 'sistema':
+                continue # Tarefas do sistema não contam para ranking de usuários
+
+            nome = mapa_nomes.get(resp_id, "Usuário Removido")
             
-            contagem[resp_id]['concluidas'] += 1
+            if nome not in contagem:
+                 contagem[nome] = 0
+            
+            contagem[nome] += 1
             total_geral += 1
 
-    # 3. Ordenar e Exibir
-    ranking = sorted(contagem.values(), key=lambda x: x['concluidas'], reverse=True)
+    # Ordenar
+    ranking = sorted(contagem.items(), key=lambda item: item[1], reverse=True)
 
     print(f"{'COLABORADOR':<25} | {'QTD'} | {'GRÁFICO'}")
     print("-" * 60)
 
-    for item in ranking:
-        qtd = item['concluidas']
-        barra = " " * qtd 
-        print(f"{item['nome']:<25} | {qtd:^3} | {barra}")
+    for nome, qtd in ranking:
+        barra = "█" * qtd 
+        print(f"{nome:<25} | {qtd:^3} | {barra}")
 
     print("-" * 60)
-    print(f"Total de entregas da equipe: {total_geral}")
+    print(f"Total de entregas manuais: {total_geral}")
 
 # RELATÓRIO 4: EXPORTAR PARA TXT
 def exportar_relatorio_txt(usuario_logado):
-    """
-    Gera um arquivo TXT com o resumo das tarefas.
-    """
     imprimir_cabecalho("EXPORTAR RELATÓRIO")
     
-    nome_arquivo = f"relatorio_{usuario_logado['nome']}_{datetime.datetime.now().strftime('%Y%m%d')}.txt"
+    nome_arquivo = f"relatorio_{datetime.datetime.now().strftime('%Y%m%d_%H%M')}.txt"
     lista_alvo = tarefas._carregar_tarefas()
     
     try:
         with open(nome_arquivo, 'w', encoding='utf-8') as f:
-            f.write(f"RELATÓRIO DE TAREFAS - {usuario_logado['nome']}\n")
-            f.write(f"Gerado em: {datetime.datetime.now()}\n")
-            f.write("="*40 + "\n\n")
+            f.write(f"RELATÓRIO GERAL DE TAREFAS\n")
+            f.write(f"Gerado por: {usuario_logado['nome']} em {datetime.datetime.now()}\n")
+            f.write("="*50 + "\n\n")
             
-            tarefas_usuario = [t for t in lista_alvo if t['responsavel'] == usuario_logado['id']]
-            
-            if not tarefas_usuario:
-                f.write("Nenhuma tarefa encontrada.\n")
-            else:
-                for t in tarefas_usuario:
-                    f.write(f"[{t['status']}] {t['titulo']}\n")
-                    f.write(f"Prazo: {t['prazo']} | Conclusão: {t['data_conclusao'] or '---'}\n")
-                    f.write(f"Descrição: {t['descricao']}\n")
-                    f.write("-" * 20 + "\n")
+            for t in lista_alvo:
+                f.write(f"[{t['status']}] {t['titulo']}\n")
+                f.write(f"Setor: {t.get('setor')} | Responsável: {t.get('responsavel')}\n")
+                f.write(f"Concluída por: {buscar_nome_usuario(t.get('concluida_por'))}\n")
+                f.write("-" * 20 + "\n")
         
         print(f"Arquivo exportado com sucesso: {nome_arquivo}")
     except Exception as e:

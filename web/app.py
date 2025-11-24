@@ -386,19 +386,46 @@ def dashboard():
     """Dashboard principal (Recepção e Admin)"""
     todas_tarefas = tarefas._carregar_tarefas()
     
-    # Estatísticas
-    total = len(todas_tarefas)
-    concluidas = len([t for t in todas_tarefas if t.get('status') == tarefas.STATUS_CONCLUIDA])
+    # Filtra tarefas baseado no setor do usuário
+    usuario_setor = session.get('usuario_setor', '').lower()
+    
+    if usuario_setor in ['farmácia', 'farmacia']:
+        # Filtra tarefas da farmácia
+        tarefas_filtradas = [
+            t for t in todas_tarefas 
+            if t.get('setor', '').lower() in ['farmácia', 'farmacia']
+        ]
+    elif usuario_setor == 'enfermagem':
+        # Filtra tarefas de enfermagem
+        tarefas_filtradas = [
+            t for t in todas_tarefas 
+            if t.get('setor', '').lower() == 'enfermagem'
+        ]
+    elif usuario_setor == 'médico':
+        # Filtra tarefas do médico (tanto as atribuídas a ele quanto as do setor médico)
+        usuario_id = session.get('usuario_id')
+        tarefas_filtradas = [
+            t for t in todas_tarefas 
+            if t.get('responsavel') == usuario_id or t.get('setor', '').lower() in ['médico', 'medico']
+        ]
+    else:
+        # Recepção e outros veem todas
+        tarefas_filtradas = todas_tarefas
+    
+    # Estatísticas baseadas nas tarefas filtradas
+    total = len(tarefas_filtradas)
+    concluidas = len([t for t in tarefas_filtradas if t.get('status') == tarefas.STATUS_CONCLUIDA])
     pendentes = total - concluidas
     
-    # Tarefas recentes
-    tarefas_recentes = todas_tarefas[-5:][::-1]  # Últimas 5, invertidas
+    # Tarefas recentes (últimas 10 invertidas)
+    tarefas_recentes = sorted(tarefas_filtradas, key=lambda x: x.get('data_criacao', ''), reverse=True)[:10]
     
     return render_template('dashboard.html', 
                          total=total,
                          concluidas=concluidas,
                          pendentes=pendentes,
-                         tarefas_recentes=tarefas_recentes)
+                         tarefas_recentes=tarefas_recentes,
+                         tarefas=tarefas_recentes)  # Adiciona 'tarefas' também
 
 
 @app.route('/dashboard/farmacia')
@@ -407,20 +434,28 @@ def dashboard_farmacia():
     """Dashboard da Farmácia"""
     todas_tarefas = tarefas._carregar_tarefas()
     
-    # Filtra apenas tarefas relacionadas à farmácia
-    tarefas_farmacia = [t for t in todas_tarefas if 'farmácia' in t.get('titulo', '').lower() or 'medicamento' in t.get('descricao', '').lower()]
+    # Filtra apenas tarefas da farmácia
+    tarefas_farmacia = [
+        t for t in todas_tarefas 
+        if t.get('setor', '').lower() in ['farmácia', 'farmacia']
+    ]
     
     # Estatísticas
     total = len(tarefas_farmacia)
     concluidas = len([t for t in tarefas_farmacia if t.get('status') == tarefas.STATUS_CONCLUIDA])
     pendentes = total - concluidas
     
+    # Ordena por data de criação (mais recentes primeiro)
+    tarefas_recentes = sorted(tarefas_farmacia, key=lambda x: x.get('data_criacao', ''), reverse=True)[:10]
+    
     return render_template('dashboard.html', 
                          total=total,
                          concluidas=concluidas,
                          pendentes=pendentes,
-                         tarefas_recentes=tarefas_farmacia[-5:][::-1],
+                         tarefas_recentes=tarefas_recentes,
+                         tarefas=tarefas_recentes,
                          setor='Farmácia')
+
 
 
 @app.route('/dashboard/enfermagem')
@@ -429,20 +464,28 @@ def dashboard_enfermagem():
     """Dashboard da Enfermagem"""
     todas_tarefas = tarefas._carregar_tarefas()
     
-    # Filtra apenas tarefas relacionadas à enfermagem
-    tarefas_enfermagem = [t for t in todas_tarefas if 'enfermagem' in t.get('titulo', '').lower() or 'enfermeiro' in t.get('descricao', '').lower()]
+    # Filtra apenas tarefas de enfermagem
+    tarefas_enfermagem = [
+        t for t in todas_tarefas 
+        if t.get('setor', '').lower() == 'enfermagem'
+    ]
     
     # Estatísticas
     total = len(tarefas_enfermagem)
     concluidas = len([t for t in tarefas_enfermagem if t.get('status') == tarefas.STATUS_CONCLUIDA])
     pendentes = total - concluidas
     
+    # Ordena por data de criação
+    tarefas_recentes = sorted(tarefas_enfermagem, key=lambda x: x.get('data_criacao', ''), reverse=True)[:10]
+    
     return render_template('dashboard.html', 
                          total=total,
                          concluidas=concluidas,
                          pendentes=pendentes,
-                         tarefas_recentes=tarefas_enfermagem[-5:][::-1],
+                         tarefas_recentes=tarefas_recentes,
+                         tarefas=tarefas_recentes,
                          setor='Enfermagem')
+
 
 
 @app.route('/dashboard/medicos')
@@ -450,38 +493,85 @@ def dashboard_enfermagem():
 def dashboard_medicos():
     """Dashboard dos Médicos"""
     todas_tarefas = tarefas._carregar_tarefas()
+    usuario_id = session.get('usuario_id')
     
-    # Filtra apenas tarefas relacionadas aos médicos
-    tarefas_medicos = [t for t in todas_tarefas if 'médico' in t.get('titulo', '').lower() or 'consulta' in t.get('descricao', '').lower()]
+    # Filtra tarefas do médico logado
+    tarefas_medicos = [
+        t for t in todas_tarefas 
+        if t.get('responsavel') == usuario_id or 
+           (t.get('setor', '').lower() in ['médico', 'medico'] and t.get('responsavel') == 'sistema')
+    ]
     
     # Estatísticas
     total = len(tarefas_medicos)
     concluidas = len([t for t in tarefas_medicos if t.get('status') == tarefas.STATUS_CONCLUIDA])
     pendentes = total - concluidas
     
+    # Ordena por data de criação
+    tarefas_recentes = sorted(tarefas_medicos, key=lambda x: x.get('data_criacao', ''), reverse=True)[:10]
+    
     return render_template('dashboard.html', 
                          total=total,
                          concluidas=concluidas,
                          pendentes=pendentes,
-                         tarefas_recentes=tarefas_medicos[-5:][::-1],
+                         tarefas_recentes=tarefas_recentes,
+                         tarefas=tarefas_recentes,
                          setor='Médicos')
 
 
 @app.route('/pacientes')
 @login_required
 def pacientes():
-    """Lista de pacientes"""
+    """Lista de pacientes - CORRIGIDO"""
     todas_tarefas = tarefas._carregar_tarefas()
     
-    # Adiciona informação do responsável
-    for tarefa in todas_tarefas:
-        usuario = usuarios.obter_usuario(tarefa.get('responsavel', ''))
-        if usuario:
-            tarefa['responsavel_nome'] = usuario.get('nome', 'Desconhecido')
-            tarefa['responsavel_setor'] = usuario.get('setor', 'Desconhecido')
+    # Filtra baseado no setor do usuário
+    usuario_setor = session.get('usuario_setor', '').lower()
+    usuario_id = session.get('usuario_id')
     
-    return render_template('pacientes.html', pacientes=todas_tarefas)
-
+    if usuario_setor in ['farmácia', 'farmacia']:
+        # Farmácia vê apenas suas tarefas
+        tarefas_filtradas = [
+            t for t in todas_tarefas 
+            if t.get('setor', '').lower() in ['farmácia', 'farmacia']
+        ]
+    elif usuario_setor == 'enfermagem':
+        # Enfermagem vê apenas suas tarefas
+        tarefas_filtradas = [
+            t for t in todas_tarefas 
+            if t.get('setor', '').lower() == 'enfermagem'
+        ]
+    elif usuario_setor == 'médico':
+        # Médico vê suas tarefas
+        tarefas_filtradas = [
+            t for t in todas_tarefas 
+            if t.get('responsavel') == usuario_id or 
+               (t.get('setor', '').lower() in ['médico', 'medico'])
+        ]
+    else:
+        # Recepção e admin veem todas
+        tarefas_filtradas = todas_tarefas
+    
+    # Adiciona informação do responsável para cada tarefa
+    for tarefa in tarefas_filtradas:
+        responsavel_id = tarefa.get('responsavel', '')
+        
+        if responsavel_id == 'sistema':
+            tarefa['responsavel_nome'] = 'Sistema'
+            tarefa['responsavel_setor'] = tarefa.get('setor', 'N/A')
+        else:
+            usuario = usuarios.obter_usuario(responsavel_id)
+            if usuario:
+                tarefa['responsavel_nome'] = usuario.get('nome', 'Desconhecido')
+                tarefa['responsavel_setor'] = usuario.get('setor', 'N/A')
+            else:
+                tarefa['responsavel_nome'] = 'Desconhecido'
+                tarefa['responsavel_setor'] = 'N/A'
+    
+    # Ordena por data de criação (mais recentes primeiro)
+    tarefas_filtradas = sorted(tarefas_filtradas, key=lambda x: x.get('data_criacao', ''), reverse=True)
+    
+    return render_template('pacientes.html', pacientes=tarefas_filtradas)
 
 @app.route('/pacientes/novo', methods=['GET', 'POST'])
 @login_required

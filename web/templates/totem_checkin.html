@@ -172,7 +172,7 @@
                 <select class="form-select form-control-lg" name="especialidade" id="especialidade-select" required>
                     <option value="">Selecione...</option>
                     {% for esp in especialidades %}
-                    <option value="{{ esp }}">{{ esp }}</option>
+                    <option value="{{ esp }}" {% if request.args.get('especialidade') == esp %}selected{% endif %}>{{ esp }}</option>
                     {% endfor %}
                 </select>
             </div>
@@ -253,6 +253,7 @@
             this.querySelector('input[type="radio"]').checked = true;
         });
     });
+    
     // Formatação de CPF
     const cpfInput = document.querySelector('input[name="cpf"]');
     if (cpfInput) {
@@ -265,13 +266,17 @@
             e.target.value = v;
         });
     }
-    // Filtrar médicos por especialidade
+    
+    // Filtrar médicos por especialidade - CORREÇÃO AQUI
     const especialidadeSelect = document.getElementById('especialidade-select');
     if (especialidadeSelect) {
         especialidadeSelect.addEventListener('change', function () {
             const esp = this.value;
             if (esp) {
-                window.location.href = `{{ url_for('totem_checkin_medico', cpf='{{ cpf }}') }}` + `?especialidade=${esp}`;
+                // Obtém o CPF da página atual
+                const cpfAtual = '{{ cpf }}';
+                // Redireciona com a especialidade selecionada
+                window.location.href = `/totem/checkin/medico/${cpfAtual}?especialidade=${encodeURIComponent(esp)}`;
             }
         });
     }

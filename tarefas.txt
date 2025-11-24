@@ -1,6 +1,7 @@
-id|titulo|descricao|responsavel|prazo|status|data_criacao|data_conclusao
-3e6a31f7-d9eb-4f4c-b1a8-d8c466556261|Alfabeto|conte de A a Z|b995d16a-d7ec-4ea5-bc83-11ff9fca821e|12/12/2025|Concluída|23/11/2025|23/11/2025
-985d8bde-1221-48d9-bbe9-16cdf41211cd|teste|teste|b995d16a-d7ec-4ea5-bc83-11ff9fca821e|12/12/2025|Concluída|23/11/2025|23/11/2025
-b3a24a37-bd07-4f18-b259-bcf81a5dfbc9|teste 2|teste 2|b995d16a-d7ec-4ea5-bc83-11ff9fca821e|13/12/2025|Concluída|23/11/2025|23/11/2025
-ea78d68c-135d-4316-b74c-9fcb4d576333|Realizar Cadastro - Alexandre Calmon|CPF: 06088586508. Especialidade desejada: Clínico Geral. Realizar cadastro e encaminhar.|sistema|23/11/2025|Concluída|23/11/2025|23/11/2025
-9a41e058-7f8d-4f70-bfa8-a87ac82a2959|tEST|TEST|779c9e48-635e-4978-abdc-3c37d7f914fc|24/06/2026|Concluída|23/11/2025|23/11/2025
+id|paciente_id|paciente_nome|titulo|descricao|tipo_tarefa|setor|responsavel|prazo|prioridade|status|dependencia|data_criacao|data_conclusao|concluida_por|prescricao|observacoes|dados_triagem|sinais_vitais|estado_geral|lote_medicamento|via_administracao|doseatendimento_token
+33b80f38-04a0-43b2-b46f-7b374d6d97b0|||Recepção - João Silva|Check-in do paciente João Silva. Aguardando confirmação da recepção.||recepção|sistema|24/11/2025||Concluída||24/11/2025|24/11/2025|||||||||
+cef584d6-f72a-4763-8988-548fd5233afe|||Consulta Médica - João Silva|Atendimento médico com Dr. House. Aguardando consulta.||médico|7c58a169-5d23-4739-b4e1-1247683ee4bb|24/11/2025||Pendente||24/11/2025||||||||||
+73e28e59-f7ba-48e0-9118-4198c2d41610|||Recepção - Maria Santos|Check-in do paciente Maria Santos. Aguardando confirmação da recepção.||recepção|sistema|24/11/2025||Concluída||24/11/2025|24/11/2025|||||||||
+a5dd5ac8-916d-4ea2-9f09-f6bb5a238c63|||Consulta Médica - Maria Santos|Atendimento médico com Dra. Grey. Aguardando consulta.||médico|0acdf608-0fd9-47d9-9c10-9869f389687b|24/11/2025||Pendente||24/11/2025||||||||||
+0d2440fd-2569-471d-a570-30448a8c1d10|||Recepção - Pedro Souza|Check-in do paciente Pedro Souza. Aguardando confirmação da recepção.||recepção|sistema|24/11/2025||Concluída||24/11/2025|24/11/2025|||||||||
+aa89b7fa-b968-483c-9956-b974ece1ef84|||Consulta Médica - Pedro Souza|Atendimento médico com Dr. House. Aguardando consulta.||médico|7c58a169-5d23-4739-b4e1-1247683ee4bb|24/11/2025||Pendente||24/11/2025||||||||||
