@@ -100,18 +100,18 @@
 
     <!-- Refresh Info -->
     <div class="text-center text-muted p-3" style="font-size: 0.85rem;">
-        <i class="bi bi-arrow-clockwise"></i> Atualização automática a cada 5s
+        <i class="bi bi-arrow-clockwise"></i> Atualizando a cada 5s...
     </div>
 </div>
 {% endblock %}
 
 {% block extra_js %}
 <script>
-    // Auto-refresh inteligente: Adiciona timestamp para evitar cache do navegador
+    // FORÇAR ATUALIZAÇÃO IGNORANDO CACHE
     setTimeout(() => {
         // Pega a URL atual sem parâmetros
         var url = window.location.href.split('?')[0];
-        // Adiciona timestamp
+        // Adiciona timestamp único para o navegador achar que é uma página nova
         window.location.href = url + '?t=' + new Date().getTime();
     }, 5000);
 </script>

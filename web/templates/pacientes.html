@@ -30,7 +30,11 @@
                 <tr>
                     <td><code>{{ paciente.id[:8] }}</code></td>
                     <td>{{ paciente.titulo }}</td>
-                    <td>{{ (paciente.descricao or '')[:50] }}{% if (paciente.descricao or '')|length > 50 %}...{% endif %}</td>                    
+                    <!-- CORREÇÃO AQUI: Tratamento de descrição vazia -->
+                    <td>
+                        {{ (paciente.descricao or '')[:50] }}
+                        {% if (paciente.descricao or '')|length > 50 %}...{% endif %}
+                    </td>
                     <td>{{ paciente.prazo }}</td>
                     <td>
                         <span class="badge bg-{{ paciente.status | status_badge }}">

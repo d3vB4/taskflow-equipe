@@ -731,6 +731,17 @@ def realizar_acao_tarefa(id):
     return redirect(url_for('dashboard'))
 
 
+# ==================== FILTROS DE TEMPLATE (ADICIONAR ISTO) ====================
+
+@app.template_filter('status_badge')
+def status_badge(status):
+    """Define a cor do badge (etiqueta) baseado no status"""
+    # Importa tarefas aqui dentro para evitar erro de importação circular
+    import tarefas 
+    if status == tarefas.STATUS_CONCLUIDA:
+        return 'success' # Verde
+    return 'warning'     # Amarelo/Laranja para pendente
+
 # ==================== EXECUÇÃO ====================
 
 if __name__ == '__main__':

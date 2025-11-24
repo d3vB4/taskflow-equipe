@@ -9,3 +9,4 @@ fe7bf320-afe6-4735-b5f3-3bc52892495a|alexandrec|alex@gmail.com|alexandrec|recep�
 00f451e5-ac59-4a98-bff7-5e91eccc0419|Dr. Estranho|strange@hospital.com|strange|médico|a665a45920422f9d417e4867efdc4fb8a04a1f3fff1fa07e998e86f7f7a27ae3||99999|Neurocirurgia|true
 52bf6c79-786d-47f8-9e26-01ec054f1f59|Enf. Joy|joy@hospital.com|joy|enfermagem|a665a45920422f9d417e4867efdc4fb8a04a1f3fff1fa07e998e86f7f7a27ae3||||true
 e53d991a-a9b7-4d92-b256-7102b3918e2d|Farm. Walter|walter@hospital.com|walter|farmácia|a665a45920422f9d417e4867efdc4fb8a04a1f3fff1fa07e998e86f7f7a27ae3||||true
+bd0848e5-0952-4f32-8a72-b389ce720cc7|Alexandre Calmon|06088586508@paciente.taskflow|06088586508|paciente|5f676ad1ced54847bccfd73164e7269c02a1c53063760c218e380f0b8cad1daf||||true

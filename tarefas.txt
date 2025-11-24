@@ -5,3 +5,5 @@ cef584d6-f72a-4763-8988-548fd5233afe|||Consulta Médica - João Silva|Atendiment
 a5dd5ac8-916d-4ea2-9f09-f6bb5a238c63|||Consulta Médica - Maria Santos|Atendimento médico com Dra. Grey. Aguardando consulta.||médico|0acdf608-0fd9-47d9-9c10-9869f389687b|24/11/2025||Pendente||24/11/2025||||||||||
 0d2440fd-2569-471d-a570-30448a8c1d10|||Recepção - Pedro Souza|Check-in do paciente Pedro Souza. Aguardando confirmação da recepção.||recepção|sistema|24/11/2025||Concluída||24/11/2025|24/11/2025|||||||||
 aa89b7fa-b968-483c-9956-b974ece1ef84|||Consulta Médica - Pedro Souza|Atendimento médico com Dr. House. Aguardando consulta.||médico|7c58a169-5d23-4739-b4e1-1247683ee4bb|24/11/2025||Pendente||24/11/2025||||||||||
+6ac4cc57-7102-4323-a4ab-03adf03bba22|||Recepção - Alexandre Calmon|Check-in realizado. Validar dados e encaminhar para Dr(a) Dr. House.||recepção|sistema|24/11/2025||Concluída||24/11/2025|24/11/2025|||||||||
+7b7ee38a-2477-40bb-8e73-fc384e293809|||Consulta - Alexandre Calmon|Consulta médica em Clínico Geral||médico|sistema|24/11/2025||Pendente||24/11/2025||||||||||
