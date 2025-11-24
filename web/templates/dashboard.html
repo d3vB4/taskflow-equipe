@@ -1,0 +1,161 @@
+{% extends "base.html" %}
+
+{% block title %}Dashboard - TaskFlow Hospital{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <h2 class="mb-4">
+        <i class="bi bi-speedometer2"></i> Dashboard
+    </h2>
+
+    <!-- Statistics Cards -->
+    <div class="row mb-4">
+        <div class="col-md-4 mb-3">
+            <div class="card border-primary h-100">
+                <div class="card-body text-center d-flex flex-column justify-content-center">
+                    <i class="bi bi-people text-primary mb-2" style="font-size: 2.5rem;"></i>
+                    <h3 class="mt-2">{{ total }}</h3>
+                    <p class="text-muted mb-0">Total de Pacientes</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-4 mb-3">
+            <div class="card border-success h-100">
+                <div class="card-body text-center d-flex flex-column justify-content-center">
+                    <i class="bi bi-check-circle text-success mb-2" style="font-size: 2.5rem;"></i>
+                    <h3 class="mt-2">{{ concluidas }}</h3>
+                    <p class="text-muted mb-0">Atendimentos Concluídos</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-4 mb-3">
+            <div class="card border-warning h-100">
+                <div class="card-body text-center d-flex flex-column justify-content-center">
+                    <i class="bi bi-clock-history text-warning mb-2" style="font-size: 2.5rem;"></i>
+                    <h3 class="mt-2">{{ pendentes }}</h3>
+                    <p class="text-muted mb-0">Em Atendimento</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Recent Tasks -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header bg-white border-bottom">
+                    <h5 class="mb-0"><i class="bi bi-list-task"></i> Tarefas Recentes</h5>
+                </div>
+                <div class="card-body p-0">
+                    <div class="table-responsive">
+                        <table class="table table-hover mb-0">
+                            <thead>
+                                <tr>
+                                    <th>Título</th>
+                                    <th>Setor</th>
+                                    <th>Status</th>
+                                    <th>Ações</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for tarefa in tarefas %}
+                                <tr>
+                                    <td>
+                                        <div class="fw-bold">{{ tarefa.titulo }}</div>
+                                        <small class="text-muted">{{ tarefa.descricao }}</small>
+                                    </td>
+                                    <td>
+                                        <span class="badge bg-secondary">{{ tarefa.setor|upper }}</span>
+                                    </td>
+                                    <td>
+                                        {% if tarefa.status == 'Concluída' %}
+                                        <span class="badge bg-success">Concluída</span>
+                                        {% elif tarefa.status == 'Pendente' %}
+                                        <span class="badge bg-warning text-dark">Pendente</span>
+                                        {% else %}
+                                        <span class="badge bg-secondary">{{ tarefa.status }}</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        {% if tarefa.status != 'Concluída' %}
+                                        {% if tarefa.setor == 'recepção' %}
+                                        <form action="{{ url_for('realizar_acao_tarefa', id=tarefa.id) }}" method="POST"
+                                            class="d-inline">
+                                            <input type="hidden" name="acao" value="encaminhar_medico">
+                                            <button type="submit" class="btn btn-sm btn-primary">
+                                                <i class="bi bi-person-badge"></i> Encaminhar Médico
+                                            </button>
+                                        </form>
+                                        {% elif tarefa.setor == 'médico' %}
+                                        <form action="{{ url_for('realizar_acao_tarefa', id=tarefa.id) }}" method="POST"
+                                            class="d-inline">
+                                            <input type="hidden" name="acao" value="alta">
+                                            <button type="submit" class="btn btn-sm btn-success me-1">
+                                                <i class="bi bi-check-circle"></i> Alta
+                                            </button>
+                                        </form>
+                                        <form action="{{ url_for('realizar_acao_tarefa', id=tarefa.id) }}" method="POST"
+                                            class="d-inline">
+                                            <input type="hidden" name="acao" value="solicitar_medicamento">
+                                            <button type="submit" class="btn btn-sm btn-warning">
+                                                <i class="bi bi-capsule"></i> Medicamento
+                                            </button>
+                                        </form>
+                                        {% elif tarefa.setor == 'farmácia' %}
+                                        <form action="{{ url_for('realizar_acao_tarefa', id=tarefa.id) }}" method="POST"
+                                            class="d-inline">
+                                            <input type="hidden" name="acao" value="dispensar_medicamento">
+                                            <button type="submit" class="btn btn-sm btn-success">
+                                                <i class="bi bi-box-seam"></i> Dispensar
+                                            </button>
+                                        </form>
+                                        {% elif tarefa.setor == 'enfermagem' %}
+                                        <form action="{{ url_for('realizar_acao_tarefa', id=tarefa.id) }}" method="POST"
+                                            class="d-inline">
+                                            <input type="hidden" name="acao" value="finalizar_atendimento">
+                                            <button type="submit" class="btn btn-sm btn-success">
+                                                <i class="bi bi-check-all"></i> Finalizar
+                                            </button>
+                                        </form>
+                                        {% endif %}
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                                {% else %}
+                                <tr>
+                                    <td colspan="4" class="text-center py-4 text-muted">
+                                        Nenhuma tarefa encontrada.
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Quick Actions -->
+    <div class="row mt-4">
+        <div class="col-12">
+            <div class="card bg-light">
+                <div class="card-body text-center">
+                    <h5 class="mb-3">Ações Rápidas</h5>
+                    <a href="{{ url_for('novo_paciente') }}" class="btn btn-primary me-2">
+                        <i class="bi bi-plus-circle"></i> Novo Paciente
+                    </a>
+                    <a href="{{ url_for('pacientes') }}" class="btn btn-outline-primary me-2">
+                        <i class="bi bi-list"></i> Ver Todos
+                    </a>
+                    <a href="{{ url_for('totem') }}" class="btn btn-outline-secondary" target="_blank">
+                        <i class="bi bi-tv"></i> Abrir Totem
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

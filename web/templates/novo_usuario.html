@@ -1,0 +1,91 @@
+{% extends "base.html" %}
+
+{% set hide_nav = false %}
+{% set hide_footer = false %}
+
+{% block title %}Cadastro de Usuário - TaskFlow Hospital{% endblock %}
+
+{% block extra_css %}
+<style>
+    .register-container {
+        max-width: 600px;
+        margin: 40px auto;
+    }
+
+    .register-card {
+        padding: 30px;
+        border: 1px solid var(--border-color);
+        border-radius: 12px;
+        background: var(--bg-surface);
+        box-shadow: var(--shadow-md);
+    }
+
+    .form-label {
+        font-weight: 600;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="register-container">
+    <div class="register-card">
+        <h2 class="mb-4"><i class="bi bi-person-plus"></i> Cadastro de Usuário</h2>
+        <form method="POST" action="{{ url_for('novo_usuario') }}">
+            <div class="mb-3">
+                <label class="form-label">Nome completo</label>
+                <input type="text" name="nome" class="form-control" required autofocus>
+            </div>
+            <div class="mb-3">
+                <label class="form-label">Login (CPF ou usuário)</label>
+                <input type="text" name="login" class="form-control" required>
+            </div>
+            <div class="mb-3">
+                <label class="form-label">E‑mail</label>
+                <input type="email" name="email" class="form-control">
+            </div>
+            <div class="mb-3">
+                <label class="form-label">Senha</label>
+                <input type="password" name="senha" class="form-control" required>
+            </div>
+            <div class="mb-3">
+                <label class="form-label">Setor</label>
+                <select class="form-select" name="setor" id="setor-select" required>
+                    <option value="">Selecione...</option>
+                    <option value="recepção">Recepção</option>
+                    <option value="médico">Médico</option>
+                    <option value="farmácia">Farmácia</option>
+                    <option value="enfermagem">Enfermagem</option>
+                </select>
+            </div>
+            <div class="mb-3 d-none" id="especialidade-group">
+                <label class="form-label">Especialidade (apenas para médicos)</label>
+                <input type="text" name="especialidade" class="form-control" placeholder="Ex.: Cardiologia">
+            </div>
+            <div class="d-grid">
+                <button type="submit" class="btn btn-primary btn-lg"><i class="bi bi-save"></i> Cadastrar</button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    const setorSelect = document.getElementById('setor-select');
+    const espGroup = document.getElementById('especialidade-group');
+    if (setorSelect) {
+        const toggleEspecialidade = () => {
+            if (setorSelect.value === 'médico') {
+                espGroup.classList.remove('d-none');
+                espGroup.querySelector('input').required = true;
+            } else {
+                espGroup.classList.add('d-none');
+                espGroup.querySelector('input').required = false;
+            }
+        };
+        setorSelect.addEventListener('change', toggleEspecialidade);
+        // Initial state
+        toggleEspecialidade();
+    }
+</script>
+{% endblock %}

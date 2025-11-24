@@ -1,19 +1,21 @@
-import json
+"""
+Módulo de persistência de dados em formato TXT.
+Desenvolvido por: Dev 4
+Responsável por salvar e carregar dados de usuários e tarefas em formato texto delimitado.
+"""
+
 import os
 
-# (Card 18) Módulo de Persistência JSON
 
 def carregar_dados(nome_arquivo: str) -> list:
     """
-    Carrega uma lista de dados de um arquivo JSON.
-
+    Carrega dados de um arquivo TXT delimitado por pipe (|).
+    
     Args:
-        nome_arquivo (str): O nome do arquivo (ex: 'usuarios.json').
-
+        nome_arquivo: Caminho do arquivo TXT a ser carregado
+        
     Returns:
-        list: Uma lista de dicionários com os dados.
-              Retorna uma lista vazia se o arquivo não for encontrado
-              ou se contiver um JSON inválido.
+        Lista de dicionários com os dados, ou lista vazia se o arquivo não existir
     """
     if not os.path.exists(nome_arquivo):
         # Se o arquivo não existe, cria um vazio e retorna lista vazia
@@ -22,36 +24,85 @@ def carregar_dados(nome_arquivo: str) -> list:
         
     try:
         with open(nome_arquivo, 'r', encoding='utf-8') as f:
-            dados = json.load(f)
-            # Garante que sempre retornamos uma lista
-            return dados if isinstance(dados, list) else []
-    except json.JSONDecodeError:
-        print(f"Aviso: Arquivo '{nome_arquivo}' está corrompido ou vazio. Iniciando com dados limpos.")
-        return [] # Retorna lista vazia se o JSON for inválido
+            linhas = f.readlines()
+            
+        if not linhas:
+            return []
+        
+        # A primeira linha contém os cabeçalhos (nomes dos campos)
+        cabecalhos = linhas[0].strip().split('|')
+        
+        dados = []
+        # Cada linha seguinte é um registro
+        for linha in linhas[1:]:
+            linha = linha.strip()
+            if not linha:  # Ignora linhas vazias
+                continue
+                
+            valores = linha.split('|')
+            
+            # Cria um dicionário com os cabeçalhos e valores
+            registro = {}
+            for i, cabecalho in enumerate(cabecalhos):
+                if i < len(valores):
+                    # Converte 'None' string para None real
+                    registro[cabecalho] = None if valores[i] == 'None' else valores[i]
+                else:
+                    registro[cabecalho] = None
+            
+            dados.append(registro)
+        
+        return dados
+        
     except IOError as e:
         print(f"Erro ao carregar o arquivo {nome_arquivo}: {e}")
         return []
+    except Exception as e:
+        print(f"Erro ao processar o arquivo {nome_arquivo}: {e}")
+        return []
+
 
 def salvar_dados(dados: list, nome_arquivo: str) -> bool:
     """
-    Salva uma lista de dados em um arquivo JSON.
-
+    Salva dados em um arquivo TXT delimitado por pipe (|).
+    
     Args:
-        dados (list): A lista de dicionários a ser salva.
-        nome_arquivo (str): O nome do arquivo (ex: 'usuarios.json').
-
+        dados: Lista de dicionários a serem salvos
+        nome_arquivo: Caminho do arquivo TXT onde salvar
+        
     Returns:
-        bool: True se os dados foram salvos, False se ocorreu um erro.
+        True se salvou com sucesso, False caso contrário
     """
     try:
-        # 'w' (write) apaga o conteúdo anterior e escreve o novo
-        # 'indent=4' formata o JSON para ficar legível
+        if not dados:
+            # Se a lista está vazia, cria apenas o arquivo vazio
+            with open(nome_arquivo, 'w', encoding='utf-8') as f:
+                pass
+            return True
+        
+        # Pega os cabeçalhos (chaves) do primeiro registro
+        cabecalhos = list(dados[0].keys())
+        
         with open(nome_arquivo, 'w', encoding='utf-8') as f:
-            json.dump(dados, f, indent=4, ensure_ascii=False)
+            # Escreve a linha de cabeçalho
+            f.write('|'.join(cabecalhos) + '\n')
+            
+            # Escreve cada registro
+            for registro in dados:
+                valores = []
+                for cabecalho in cabecalhos:
+                    valor = registro.get(cabecalho, 'None')
+                    # Converte None para string 'None'
+                    valores.append(str(valor) if valor is not None else 'None')
+                
+                f.write('|'.join(valores) + '\n')
+        
         return True
+        
     except IOError as e:
         print(f"Erro ao salvar dados em {nome_arquivo}: {e}")
         return False
-    except TypeError as e:
-        print(f"Erro de tipo ao tentar salvar dados: {e}")
+    
+    except Exception as e:
+        print(f'Erro ao processar dados para salvar: {e}')
         return False

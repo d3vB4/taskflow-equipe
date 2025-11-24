@@ -1,0 +1,7 @@
+id|paciente_id|paciente_nome|titulo|descricao|tipo_tarefa|setor|responsavel|prazo|prioridade|status|dependencia|data_criacao|data_conclusao|concluida_por|prescricao|observacoes|dados_triagem|sinais_vitais|estado_geral|lote_medicamento|via_administracao|doseatendimento_token
+33b80f38-04a0-43b2-b46f-7b374d6d97b0|||Recepção - João Silva|Check-in do paciente João Silva. Aguardando confirmação da recepção.||recepção|sistema|24/11/2025||Concluída||24/11/2025|24/11/2025|||||||||
+cef584d6-f72a-4763-8988-548fd5233afe|||Consulta Médica - João Silva|Atendimento médico com Dr. House. Aguardando consulta.||médico|7c58a169-5d23-4739-b4e1-1247683ee4bb|24/11/2025||Pendente||24/11/2025||||||||||
+73e28e59-f7ba-48e0-9118-4198c2d41610|||Recepção - Maria Santos|Check-in do paciente Maria Santos. Aguardando confirmação da recepção.||recepção|sistema|24/11/2025||Concluída||24/11/2025|24/11/2025|||||||||
+a5dd5ac8-916d-4ea2-9f09-f6bb5a238c63|||Consulta Médica - Maria Santos|Atendimento médico com Dra. Grey. Aguardando consulta.||médico|0acdf608-0fd9-47d9-9c10-9869f389687b|24/11/2025||Pendente||24/11/2025||||||||||
+0d2440fd-2569-471d-a570-30448a8c1d10|||Recepção - Pedro Souza|Check-in do paciente Pedro Souza. Aguardando confirmação da recepção.||recepção|sistema|24/11/2025||Concluída||24/11/2025|24/11/2025|||||||||
+aa89b7fa-b968-483c-9956-b974ece1ef84|||Consulta Médica - Pedro Souza|Atendimento médico com Dr. House. Aguardando consulta.||médico|7c58a169-5d23-4739-b4e1-1247683ee4bb|24/11/2025||Pendente||24/11/2025||||||||||
