@@ -1,0 +1,71 @@
+{% extends "base.html" %}
+
+{% block title %}Pacientes - TaskFlow Hospital{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2><i class="bi bi-people"></i> Pacientes</h2>
+        <a href="{{ url_for('novo_paciente') }}" class="btn btn-primary">
+            <i class="bi bi-plus-circle"></i> Novo Paciente
+        </a>
+    </div>
+
+    {% if pacientes %}
+    <div class="table-responsive">
+        <table class="table table-hover">
+            <thead class="table-light">
+                <tr>
+                    <th>ID</th>
+                    <th>Título</th>
+                    <th>Descrição</th>
+                    <th>Prazo</th>
+                    <th>Status</th>
+                    <th>Setor</th>
+                    <th>Ações</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for paciente in pacientes %}
+                <tr>
+                    <td><code>{{ paciente.id[:8] }}</code></td>
+                    <td>{{ paciente.titulo }}</td>
+                    <td>{{ paciente.descricao[:50] }}{% if paciente.descricao|length > 50 %}...{% endif %}</td>
+                    <td>{{ paciente.prazo }}</td>
+                    <td>
+                        <span class="badge bg-{{ paciente.status | status_badge }}">
+                            {{ paciente.status }}
+                        </span>
+                    </td>
+                    <td>
+                        <span class="badge bg-secondary">
+                            {{ paciente.responsavel_setor | default('N/A') }}
+                        </span>
+                    </td>
+                    <td>
+                        {% if paciente.status != 'Concluída' %}
+                        <form method="POST" action="{{ url_for('atualizar_paciente', id=paciente.id) }}"
+                            class="d-inline">
+                            <input type="hidden" name="status" value="Concluída">
+                            <button type="submit" class="btn btn-sm btn-success"
+                                onclick="return confirm('Marcar como concluído?')">
+                                <i class="bi bi-check-circle"></i>
+                            </button>
+                        </form>
+                        {% else %}
+                        <span class="text-success"><i class="bi bi-check-circle-fill"></i></span>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% else %}
+    <div class="alert alert-info text-center">
+        <i class="bi bi-info-circle"></i> Nenhum paciente cadastrado ainda.
+        <a href="{{ url_for('novo_paciente') }}" class="alert-link">Cadastre o primeiro!</a>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

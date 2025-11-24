@@ -1,6 +1,22 @@
+"""
+Módulo de persistência de dados em formato TXT.
+Desenvolvido por: Dev 4
+Responsável por salvar e carregar dados de usuários e tarefas em formato texto delimitado.
+"""
+
 import os
 
-def carregar_dados(nome_arquivo: str) -> None:
+
+def carregar_dados(nome_arquivo: str) -> list:
+    """
+    Carrega dados de um arquivo TXT delimitado por pipe (|).
+    
+    Args:
+        nome_arquivo: Caminho do arquivo TXT a ser carregado
+        
+    Returns:
+        Lista de dicionários com os dados, ou lista vazia se o arquivo não existir
+    """
     if not os.path.exists(nome_arquivo):
         # Se o arquivo não existe, cria um vazio e retorna lista vazia
         salvar_dados([], nome_arquivo)
@@ -45,7 +61,18 @@ def carregar_dados(nome_arquivo: str) -> None:
         print(f"Erro ao processar o arquivo {nome_arquivo}: {e}")
         return []
 
-def salvar_dados(dados: list,nome_arquivo: str) -> bool:
+
+def salvar_dados(dados: list, nome_arquivo: str) -> bool:
+    """
+    Salva dados em um arquivo TXT delimitado por pipe (|).
+    
+    Args:
+        dados: Lista de dicionários a serem salvos
+        nome_arquivo: Caminho do arquivo TXT onde salvar
+        
+    Returns:
+        True se salvou com sucesso, False caso contrário
+    """
     try:
         if not dados:
             # Se a lista está vazia, cria apenas o arquivo vazio
@@ -72,12 +99,10 @@ def salvar_dados(dados: list,nome_arquivo: str) -> bool:
         
         return True
         
-
-    
     except IOError as e:
         print(f"Erro ao salvar dados em {nome_arquivo}: {e}")
         return False
     
     except Exception as e:
-        print(f'Erro ao tentar processar dados para salvar: {e}')
-        return []
+        print(f'Erro ao processar dados para salvar: {e}')
+        return False

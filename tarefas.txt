@@ -1,4 +1,6 @@
 id|titulo|descricao|responsavel|prazo|status|data_criacao|data_conclusao
 3e6a31f7-d9eb-4f4c-b1a8-d8c466556261|Alfabeto|conte de A a Z|b995d16a-d7ec-4ea5-bc83-11ff9fca821e|12/12/2025|Concluída|23/11/2025|23/11/2025
 985d8bde-1221-48d9-bbe9-16cdf41211cd|teste|teste|b995d16a-d7ec-4ea5-bc83-11ff9fca821e|12/12/2025|Concluída|23/11/2025|23/11/2025
-b3a24a37-bd07-4f18-b259-bcf81a5dfbc9|teste 2|teste 2|b995d16a-d7ec-4ea5-bc83-11ff9fca821e|13/12/2025|Pendente|23/11/2025|None
+b3a24a37-bd07-4f18-b259-bcf81a5dfbc9|teste 2|teste 2|b995d16a-d7ec-4ea5-bc83-11ff9fca821e|13/12/2025|Concluída|23/11/2025|23/11/2025
+ea78d68c-135d-4316-b74c-9fcb4d576333|Realizar Cadastro - Alexandre Calmon|CPF: 06088586508. Especialidade desejada: Clínico Geral. Realizar cadastro e encaminhar.|sistema|23/11/2025|Concluída|23/11/2025|23/11/2025
+9a41e058-7f8d-4f70-bfa8-a87ac82a2959|tEST|TEST|779c9e48-635e-4978-abdc-3c37d7f914fc|24/06/2026|Concluída|23/11/2025|23/11/2025

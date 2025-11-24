@@ -83,7 +83,8 @@ def listar_tarefas(usuario_logado: dict):
     tarefas_do_usuario = [t for t in todas_tarefas if t['responsavel'] == usuario_logado['id']]
     
     if not tarefas_do_usuario:
-        print("Você ainda não tem tarefas cadastradas.")
+        print("Você ainda não tem pacientes (tarefas) cadastrados.")
+        print("Dica: Use a opção 'Novo Paciente' no menu para cadastrar.")
         return
     
     print("=" * 60)

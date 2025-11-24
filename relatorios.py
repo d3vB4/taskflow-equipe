@@ -73,8 +73,21 @@ def gerar_relatorio_concluidos(usuario_filtro=None):
         if not confirmacao_concluida(tarefa):
             continue
 
-        # 2. Filtro de Usuário
-        if usuario_filtro and tarefa.get('responsavel') != usuario_filtro.get('id'):
+        # 2. Filtro de Usuário e Setor
+        pertence_ao_usuario = False
+        if not usuario_filtro:
+            pertence_ao_usuario = True
+        else:
+            # É do usuário se:
+            # 1. Ele é o responsável direto
+            # 2. O responsável é 'sistema' E a tarefa é do setor dele
+            if tarefa.get('responsavel') == usuario_filtro.get('id'):
+                pertence_ao_usuario = True
+            elif tarefa.get('responsavel') == 'sistema' and \
+                 tarefa.get('setor', '').lower() == usuario_filtro.get('setor', '').lower():
+                pertence_ao_usuario = True
+
+        if not pertence_ao_usuario:
             continue
 
         concluidas_count += 1
@@ -132,9 +145,15 @@ def gerar_relatorio_pendentes(usuario_filtro=None):
 
     for tarefa in lista_alvo:
         # Lógica para contar totais do usuário (para a porcentagem no final)
-        pertence_ao_usuario = True
-        if usuario_filtro and tarefa.get('responsavel') != usuario_filtro.get('id'):
-            pertence_ao_usuario = False
+        pertence_ao_usuario = False
+        if not usuario_filtro:
+            pertence_ao_usuario = True
+        else:
+            if tarefa.get('responsavel') == usuario_filtro.get('id'):
+                pertence_ao_usuario = True
+            elif tarefa.get('responsavel') == 'sistema' and \
+                 tarefa.get('setor', '').lower() == usuario_filtro.get('setor', '').lower():
+                pertence_ao_usuario = True
         
         if pertence_ao_usuario:
             total_tarefas_usuario += 1

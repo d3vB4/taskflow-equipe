@@ -29,6 +29,9 @@ def _save_usuarios_to_file() -> None:
                     _escape(u.get('setor', '') or ''),
                     _escape(u.get('senha', '') or ''),
                     _escape(u.get('data_cadastro', '') or ''),
+                    _escape(u.get('crm', '') or ''),  # Campo para médicos
+                    _escape(u.get('especialidade', '') or ''),  # Campo para médicos
+                    _escape(u.get('disponivel', '') or ''),  # Campo para médicos
                 ]
                 f.write('|'.join(parts) + '\n')
     except Exception:
@@ -44,10 +47,18 @@ def _load_usuarios_from_file() -> None:
                 if not line:
                     continue
                 parts = line.split('|')
-                # Esperamos 7 campos: id, nome, email, login, setor, senha, data_cadastro
+                # Esperamos 10 campos: id, nome, email, login, setor, senha, data_cadastro, crm, especialidade, disponivel
                 if len(parts) < 7:
                     continue
+                
+                # Campos básicos (compatibilidade com formato antigo)
                 id_u, nome, email, login_u, setor, senha_u, data_cadastro = parts[:7]
+                
+                # Campos adicionais para médicos (se existirem)
+                crm = parts[7] if len(parts) > 7 else ''
+                especialidade = parts[8] if len(parts) > 8 else ''
+                disponivel = parts[9] if len(parts) > 9 else ''
+                
                 usuarios[id_u] = {
                     'id': id_u,
                     'nome': _unescape(nome),
@@ -56,6 +67,9 @@ def _load_usuarios_from_file() -> None:
                     'setor': _unescape(setor) or None,
                     'senha': _unescape(senha_u) or None,
                     'data_cadastro': _unescape(data_cadastro) or None,
+                    'crm': _unescape(crm) or None,
+                    'especialidade': _unescape(especialidade) or None,
+                    'disponivel': _unescape(disponivel) or None,
                 }
     except Exception:
         # Arquivo pode não existir ou estar corrompido; apenas ignoramos
@@ -65,7 +79,10 @@ def _load_usuarios_from_file() -> None:
 def _hash_senha(senha: str) -> str:
     return hashlib.sha256(senha.encode('utf-8')).hexdigest()
 
-def cadastrar_usuario(nome: str | None = None, login: str | None = None, email: str | None = None, senha: str | None = None, setor: str | None = None) -> dict:
+def cadastrar_usuario(nome: str | None = None, login: str | None = None, email: str | None = None, 
+                      senha: str | None = None, setor: str | None = None, 
+                      crm: str | None = None, especialidade: str | None = None, 
+                      disponivel: bool = True) -> dict:
     # Solicita os dados do usuário se não fornecidos
     nome = input("Nome: ") if nome is None else nome
     login = input("Login: ") if login is None else login
@@ -91,6 +108,7 @@ def cadastrar_usuario(nome: str | None = None, login: str | None = None, email: 
         'enfermagem': 'enfermagem',
         'medico': 'médico',
         'farmacia': 'farmácia',
+        'paciente': 'paciente',
     }
     setor_normalizado = None
     if setor:
@@ -98,6 +116,10 @@ def cadastrar_usuario(nome: str | None = None, login: str | None = None, email: 
         if key not in allowed:
             raise ValueError(f"Setor inválido: {setor}. Opções válidas: {', '.join(allowed.values())}.")
         setor_normalizado = allowed[key]
+
+    # Se for médico e não tiver especialidade, solicita
+    if setor_normalizado == 'médico' and especialidade is None:
+        especialidade = input("Especialidade: ").strip()
 
      # Gera um ID único para o usuário
     novo_id = str(uuid.uuid4())
@@ -111,6 +133,9 @@ def cadastrar_usuario(nome: str | None = None, login: str | None = None, email: 
         'setor': setor_normalizado,
         'senha': _hash_senha(senha),
         'data_cadastro': data_cadastro,
+        'crm': crm,
+        'especialidade': especialidade,
+        'disponivel': 'true' if disponivel else 'false' if crm else None,
     }
     usuarios[novo_id] = novo_usuario
     # Persiste em arquivo texto
@@ -195,6 +220,17 @@ def realizar_login(login: str | None = None, senha: str | None = None) -> dict |
 
     return None
 
+
+# --- FUNÇÕES AUXILIARES PARA MÉDICOS ---
+
+def listar_especialidades() -> list[str]:
+    """Retorna uma lista única de especialidades dos médicos cadastrados."""
+    especialidades = set()
+    for u in usuarios.values():
+        # Verifica se é médico e tem especialidade definida
+        if u.get('setor') == 'médico' and u.get('especialidade'):
+            especialidades.add(u.get('especialidade'))
+    return sorted(list(especialidades))
 
 # Carrega usuários do arquivo texto ao importar o módulo
 _load_usuarios_from_file()
